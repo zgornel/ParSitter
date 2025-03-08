@@ -25,12 +25,20 @@ const FILE_EXTENSIONS = Dict(
     "c" => [".c", ".cxx"],
     "c#" => [".cs"])
 
-const LOCAL_TMP = "tmp/"
-
 function check_language(language, lang_map)
     @assert language in keys(lang_map) "Unrecognized language $language, exiting..."
 end
 
+Base.isfile(::Nothing) = false
+function check_tree_sitter(;system=:Linux,
+                            tree_sitter_path=nothing)
+    if system==:Linux
+        @assert Sys.islinux() "This is not a Linux system."
+        @assert isfile("/usr/bin/tree-sitter") ||
+                 isfile("/bin/tree-sitter") ||
+                 isfile(tree_sitter_path) "tree-sitter not found on system"
+    end
+end
 
 function _normalize_fs_path(path::String)::String
     result = replace(path, "\\" => "/")
@@ -40,33 +48,29 @@ end
 
 
 # Returns a tree-sitter command
-# TODO: Fix this, current workaround is to use the file version
-function _make_parse_code_cmd(code::String, language::String, tmpfile::String)
+function _make_parse_code_cmd(code::String, language::String)
     _language = LANGUAGE_MAP[language]
-    return `sh -c "echo '$code' | tree-sitter parse -q -x --scope $_language parse /dev/stdin 2>/dev/null"`
+    #return `sh -c "echo '$code' | tree-sitter parse -q -x --scope $_language parse /dev/stdin 2>/dev/null"`
+    return pipeline(`tree-sitter parse -q -x --scope $_language parse /dev/stdin`, stdin=IOBuffer(code), stderr=devnull)
 end
 
 # Returns a tree-sitter command
 function _make_parse_file_cmd(file::String, language::String)
     _language = LANGUAGE_MAP[language]
-    return `tree-sitter parse -q -x --scope $(_language) $(file) 2'>'/dev/null`
+    #return `tree-sitter parse -q -x --scope $(_language) $(file) 2'>'/dev/null`
+    return pipeline(`tree-sitter parse -q -x --scope $(_language) $(file)`, stderr=devnull)
 end
 
 
 # Parsing functions (execute tree-sitter commands)
 function parse(code::String, language::String)
-    tmppath = tempname(LOCAL_TMP, cleanup=false)
-    open(tmppath, "w") do io
-        write(io, code);
-    end
-    ts_cmd = _make_parse_file_cmd(abspath(tmppath), language)
+    ts_cmd = _make_parse_code_cmd(code, language)
     out = try
         out = read(ts_cmd, String)
     catch
         @warn "Could not parse code snippet."
         ""
     end
-    rm(tmppath, force=true)
     return replace(out, "\n"=>"")
 end
 

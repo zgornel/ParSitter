@@ -65,6 +65,7 @@ function real_main()
     input_type= args["input-type"]
     language = args["language"]
     ###
+    ParSitter.check_tree_sitter()
     ParSitter.check_language(language, ParSitter.LANGUAGE_MAP)
 
     parsed = if input_type == "directory"
