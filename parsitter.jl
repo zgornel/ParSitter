@@ -23,6 +23,12 @@ function get_arguments(args::Vector{String})
         "--language"
             help = "Programming language. Available: 'python', 'julia', 'c', 'c#'"
             arg_type = String
+        "--print-code"
+            help = "Whether to print out the code that is parsed"
+            action = :store_true
+        "--escape-chars"
+            help = "Whether to parse \\n, \\t etc. as escape chars. Active only for 'code' inputs"
+            action = :store_true
         "--log-level"
             help = "logging level"
             default = "error"
@@ -64,18 +70,24 @@ function real_main()
     input = args["input"]
     input_type= args["input-type"]
     language = args["language"]
+    escape_chars= args["escape-chars"]
+    print_code = args["print-code"]
     ###
     ParSitter.check_tree_sitter()
     ParSitter.check_language(language, ParSitter.LANGUAGE_MAP)
 
     parsed = if input_type == "directory"
+        # iterate rcursively through directory and parse all files
         ParSitter.parse(ParSitter.Directory(input), language)
     elseif input_type == "file"
+        # parse a single file
         ParSitter.parse(ParSitter.File(input), language)
     elseif input_type == "code"
-        ParSitter.parse(ParSitter.Code(input), language)
+        # parse code directly from stdin
+        ParSitter.parse(ParSitter.Code(input), language; escape_chars, print_code)
     else
         @warn "Unrecognized input-type."
+        Dict()  # return an empty dict
     end
 
     print(JSON.json(parsed))

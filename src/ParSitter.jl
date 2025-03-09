@@ -62,8 +62,18 @@ function _make_parse_file_cmd(file::String, language::String)
 end
 
 
+_enable_escape_chars(code) = begin
+    # "\n", "\t" in input code are treated as escape chars and not strings
+    for ch in ["\\n"=>'\n',"\\t"=>'\t', "\\r"=>'\r']
+        code = replace(code, ch[1]=>ch[2])
+    end
+    return code
+end
+
 # Parsing functions (execute tree-sitter commands)
-function parse(code::String, language::String)
+function parse(code::String, language::String; escape_chars=false, print_code=false)
+    escape_chars && (code = _enable_escape_chars(code))
+    print_code && println("---\n$code\n---\n")
     ts_cmd = _make_parse_code_cmd(code, language)
     out = try
         out = read(ts_cmd, String)
@@ -74,8 +84,8 @@ function parse(code::String, language::String)
     return replace(out, "\n"=>"")
 end
 
-function parse(code::Code, language::String)
-    return Dict(""=>parse(code.code, language))
+function parse(code::Code, language::String; escape_chars=false, print_code=false)
+    return Dict(""=>parse(code.code, language; escape_chars, print_code))
 end
 
 function parse(file::File, language::String)
