@@ -22,7 +22,7 @@ const LANGUAGE_MAP = Dict(
 const FILE_EXTENSIONS = Dict(
     "python" => [".py"],
     "julia" => [".jl"],
-    "c" => [".c", ".cxx"],
+    "c" => [".c", ".h"],
     "c#" => [".cs"])
 
 function check_language(language, lang_map)
@@ -51,7 +51,7 @@ end
 function _make_parse_code_cmd(code::String, language::String)
     _language = LANGUAGE_MAP[language]
     #return `sh -c "echo '$code' | tree-sitter parse -q -x --scope $_language parse /dev/stdin 2>/dev/null"`
-    return pipeline(`tree-sitter parse -q -x --scope $_language parse /dev/stdin`, stdin=IOBuffer(code), stderr=devnull)
+    return pipeline(`tree-sitter parse -q -x --scope $_language /dev/stdin`, stdin=IOBuffer(code), stderr=devnull)
 end
 
 # Returns a tree-sitter command
