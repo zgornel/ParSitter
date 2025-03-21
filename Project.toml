@@ -4,9 +4,21 @@ authors = ["Corneliu Cofaru <cornel@oxoaresearch.com>"]
 version = "0.1.0"
 
 [deps]
+AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+EzXML = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 
 [compat]
+AbstractTrees = "0.4.5"
 ArgParse = "1.2.0"
+EzXML = "1.2.1"
 JSON = "0.21.4"
+
+[extras]
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test", "Pkg", "Logging"]
