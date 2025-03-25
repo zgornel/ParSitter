@@ -1,5 +1,6 @@
 from vectors import vector2d
 
+# Main function
 def main():
     print("Hello from test-project!")
     v = vector2d.Vector2d(1,2)
