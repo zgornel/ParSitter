@@ -1,6 +1,8 @@
 using EzXML
 using AbstractTrees
 
+const DEFAULT_CAPTURE_SYM="@"
+
 # AbstractTrees interface for tree-sitter generated XML ASTs
  _remove_space(s)=strip(replace(s, r"[\s]+"=>" "))
 AbstractTrees.children(t::EzXML.Node) = collect(EzXML.eachelement(t));
@@ -39,6 +41,15 @@ build_tq_tree(t::Tuple) = begin
 end
 
 """
+Checks that a query tree does not contain duplicate capture keys.
+"""
+function check_tq_tree(tree::TreeQueryExpr)
+	captures = [n.head for n in PreOrderDFS(tree) if ParSitter.is_match_node(n.head)]
+	@assert length(captures) == length(unique(captures)) "Found non-unique capture keys in query"
+end
+
+
+"""
     build_xml_tree(tree_sitter_xml_ast::String)
 
 Postprocesses and parse the tree-sitter XML output to
@@ -48,6 +59,12 @@ function build_xml_tree(tree_sitter_xml_ast::String)
    tmp = replace(tree_sitter_xml_ast, "\n"=>"")
    xml = EzXML.parsexml(tmp)
 end
+
+
+# Function that checks whether a node is a 'capture node' i.e. value of the form "@capture_key"
+is_match_node(n; capture_sym=DEFAULT_CAPTURE_SYM) = isa(n, String) ? startswith(n, capture_sym) : false
+# Function to get the capture key
+capture_key(n; capture_sym=DEFAULT_CAPTURE_SYM) = is_match_node(n; capture_sym) ? split(n, capture_sym)[2] : ""
 
 
 #TODO (Corneliu): implement O(n) algorithm based on either:
@@ -61,24 +78,27 @@ It returns a vector of potential matches, where each element is a `Tuple{Bool, D
 containing the result of the match and any captured strings. To capture a value,
 the query node must start with `"@"`.
 ```
+using ParSitter
+       target = (1, 1, (1, (1,(2,-3))), 1, (-1,-2,-3,-4))
+       query = ("@0",("@1",-3))
+       query_tq = ParSitter.build_tq_tree(query)
+       target_tq = ParSitter.build_tq_tree(target)
+       ParSitter.match_tree(target_tq.children[2].children[1], query_tq)
+(true, Dict{Any, Any}("1" => 2, "0" => 1))
 ```
 """
 function match_tree(tree1,
                     tree2;
                     captured_symbols=Dict(),
-                    capture_sym="@")
-    # Initializations
+                    capture_sym=DEFAULT_CAPTURE_SYM)
+	# Checks
+	check_tq_tree(tree2)
+	# Initializations
     c1 = children(tree1)
     c2 = children(tree2)
     n1 = AbstractTrees.nodevalue(tree1)
     n2 = AbstractTrees.nodevalue(tree2)
-    # Function that checks whether a node is a 'capture node' i.e. value of the form "@capture_key"
-    is_match_node(n; capture_sym=capture_sym) =
-        isa(n, String) ? startswith(n, capture_sym) : false
-    # Function to get the capture key
-    capture_key(n; capture_sym=capture_sym) =
-        is_match_node(n; capture_sym) ? split(n, capture_sym)[2] : ""
-    # Start recursion
+	# Start recursion
     if length(c1) == length(c2) == 0
         if n1 == n2
             is_match_node(n1) && @warn "Value $n1 will not be captured, illegal use of '@'"
@@ -98,22 +118,24 @@ function match_tree(tree1,
                 push!(captured_symbols, capture_key(n2) => n1)
             end
         end
-        _results = map(ci->match_tree(ci[1], ci[2]; captured_symbols),
-                        Iterators.take(zip(c1, c2), length(c2)))
-        for _r in _results
-            for (k,v) in _r[2]
+        subtree_results = map(
+            ci->match_tree(ci...; captured_symbols),
+            Iterators.take(zip(c1, c2), length(c2))
+           )
+        for (subtree_found, subtree_captures) in subtree_results
+            for (k,v) in subtree_captures
                 # Add a new matched string only in no value exists for the key
                 # i.e. ignore multiple identical capture keys
                 captured_symbols[k] = get(captured_symbols, k, v)
-                !haskey(captured_symbols, k) && push!(captured_symbols, k=>v)
             end
-            found &= _r[1]
+            found &= subtree_found
         end
         return found, captured_symbols
-    else # different number of children, no match
+    else # query has more children
         return false, captured_symbols
     end
 end
+
 
 """
     Query a tree with another tree. Both trees should support
