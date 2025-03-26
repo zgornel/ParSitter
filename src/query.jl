@@ -102,12 +102,12 @@ function match_tree(tree1,
     if length(c1) == length(c2) == 0
         if n1 == n2
             is_match_node(n1) && @warn "Value $n1 will not be captured, illegal use of '@'"
-            return true, captured_symbols
+            return true, captured_symbols, tree1 => tree2
         elseif is_match_node(n2)
             push!(captured_symbols, capture_key(n2)=>n1)
-            return true, captured_symbols
+            return true, captured_symbols, tree1 => tree2
         else
-            return false, captured_symbols
+            return false, captured_symbols, tree1 => tree2
         end
     elseif length(c1) >= length(c2) && length(c2) > 0
         found = (n1 == n2) || is_match_node(n2)
@@ -130,9 +130,9 @@ function match_tree(tree1,
             end
             found &= subtree_found
         end
-        return found, captured_symbols
+        return found, captured_symbols, tree1=>tree2
     else # query has more children
-        return false, captured_symbols
+        return false, captured_symbols, tree1=>tree2
     end
 end
 
