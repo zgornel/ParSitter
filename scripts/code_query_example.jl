@@ -1,3 +1,4 @@
+# Run this with `julia --project ./scripts/tq_trees_query_example.jl`
 using AbstractTrees, EzXML
 using Revise
 using ParSitter
@@ -40,9 +41,12 @@ _query_nodevalue=node->begin
                         end
                     end
 _apply_regex_glob(tree1, tree2) = ParSitter.is_capture_node(tree2; capture_sym="@").is_match && _query_nodevalue(tree2) == "*"
-ParSitter.query(target.root, query;
-    target_tree_nodevalue=_target_nodevalue,
-    query_tree_nodevalue=_query_nodevalue,
-    capture_function=node->strip(node.content),
-    node_comparison_yields_true=_apply_regex_glob
-    ) |> filter(x->x[1])
+r = ParSitter.query(target.root,
+                    query;
+                    target_tree_nodevalue=_target_nodevalue,
+                    query_tree_nodevalue=_query_nodevalue,
+                    capture_function=node->strip(node.content),
+                    node_comparison_yields_true=_apply_regex_glob)
+
+r_true = filter(x->x[1], r)
+@show r_true[1][1:2]
