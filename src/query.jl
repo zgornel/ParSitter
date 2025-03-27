@@ -44,7 +44,7 @@ end
 Checks that a query tree does not contain duplicate capture keys.
 """
 function check_tq_tree(tree::TreeQueryExpr)
-	captures = [n.head for n in PreOrderDFS(tree) if ParSitter.is_match_node(n.head)]
+	captures = [n for n in PreOrderDFS(tree) if ParSitter.is_capture_node(n).is_match]
 	@assert length(captures) == length(unique(captures)) "Found non-unique capture keys in query"
 end
 
@@ -60,69 +60,96 @@ function build_xml_tree(tree_sitter_xml_ast::String)
    xml = EzXML.parsexml(tmp)
 end
 
+"""
+    is_capture_node(n; capture_sym=DEFAULT_CAPTURE_SYM)
 
-# Function that checks whether a node is a 'capture node' i.e. value of the form "@capture_key"
-is_match_node(n; capture_sym=DEFAULT_CAPTURE_SYM) = isa(n, String) ? startswith(n, capture_sym) : false
-# Function to get the capture key
-capture_key(n; capture_sym=DEFAULT_CAPTURE_SYM) = is_match_node(n; capture_sym) ? split(n, capture_sym)[2] : ""
+Function that checks whether a node is a 'capture node' i.e. value of the form "match@capture_key"
+and returns a `NamedTuple` with the result and the capture key string
+```
+julia> ParSitter.is_capture_node("value@capture_key")
+(is_match = true, capture_key = "capture_key")
 
+julia> ParSitter.is_capture_node("value@capture_key", capture_sym="@@")
+(is_match = false, capture_key = nothing)
+```
+"""
+is_capture_node(n::String; capture_sym=DEFAULT_CAPTURE_SYM) = begin
+    is_match = !isnothing(match(Regex("[.]*$(capture_sym)[.]*"), n))
+    capture_key = is_match ? string(split(n, capture_sym)[2]) : nothing
+    return (;is_match, capture_key)
+end
+is_capture_node(n::TreeQueryExpr; capture_sym=DEFAULT_CAPTURE_SYM) = is_capture_node(n.head; capture_sym)
+is_capture_node(n; capture_sym=DEFAULT_CAPTURE_SYM) = (is_match=false, capture_key=nothing)
 
 #TODO (Corneliu): implement O(n) algorithm based on either:
 #                 (1) https://www.geeksforgeeks.org/check-binary-tree-subtree-another-binary-tree-set-2/
 #                 (2) https://www.geeksforgeeks.org/check-if-a-binary-tree-is-subtree-of-another-binary-tree-using-preorder-traversal-iterative/
 """
-    match_tree(tree1, tree2; captured_symbols=Dict(), capture_sym="@")
+    match_tree(target_tree,
+               query_tree;
+               captured_symbols=Dict(),
+               capture_sym=DEFAULT_CAPTURE_SYM,
+               target_tree_nodevalue=AbstractTrees.nodevalue,
+               query_tree_nodevalue=AbstractTrees.nodevalue,
+               capture_function=AbstractTrees.nodevalue,
+               node_comparison_yields_true=(args...)->false)
 
-Function that searches a query tree `tree2` into a target tree `tree1`.
-It returns a vector of potential matches, where each element is a `Tuple{Bool, Dict}`
-containing the result of the match and any captured strings. To capture a value,
-the query node must start with `"@"`.
-```
-using ParSitter
-       target = (1, 1, (1, (1,(2,-3))), 1, (-1,-2,-3,-4))
-       query = ("@0",("@1",-3))
-       query_tq = ParSitter.build_tq_tree(query)
-       target_tq = ParSitter.build_tq_tree(target)
-       ParSitter.match_tree(target_tq.children[2].children[1], query_tq)
-(true, Dict{Any, Any}("1" => 2, "0" => 1))
-```
+Function that searches a `query_tree` into a `target_tree`. It returns a vector
+of subtree matches, where each element is a `Tuple` that contains the result
+of the match, any captured values and the trees that were compared.
+To capture a value, the `is_capture_node` must return true.
+One example is using query nodes of  the form `"nodevalue@capture_variable"`.
+In the matching process, the query and target node values are extracted
+using `target_tree_nodevalue` and `target_tree_nodevalue` respectively and compared.
+If they match, the `target_tree` node value is captured by applying `capture_function` to the node.
 """
-function match_tree(tree1,
-                    tree2;
+function match_tree(target_tree,
+                    query_tree;
                     captured_symbols=Dict(),
-                    capture_sym=DEFAULT_CAPTURE_SYM)
+                    is_capture_node=is_capture_node,
+                    target_tree_nodevalue=AbstractTrees.nodevalue,
+                    query_tree_nodevalue=AbstractTrees.nodevalue,
+                    capture_function=AbstractTrees.nodevalue,
+                    node_comparison_yields_true=(args...)->false)
 	# Checks
-	check_tq_tree(tree2)
+	check_tq_tree(query_tree)
 	# Initializations
-    c1 = children(tree1)
-    c2 = children(tree2)
-    n1 = AbstractTrees.nodevalue(tree1)
-    n2 = AbstractTrees.nodevalue(tree2)
+    c1 = children(target_tree)
+    c2 = children(query_tree)
+    n1 = target_tree_nodevalue(target_tree)
+    n2 = query_tree_nodevalue(query_tree)
+    # Checks whether node values match or, we have a capture node with a capture condition
+    found = (n1 == n2) || node_comparison_yields_true(target_tree, query_tree)
 	# Start recursion
     if length(c1) == length(c2) == 0
-        if n1 == n2
-            is_match_node(n1) && @warn "Value $n1 will not be captured, illegal use of '@'"
-            return true, captured_symbols, tree1 => tree2
-        elseif is_match_node(n2)
-            push!(captured_symbols, capture_key(n2)=>n1)
-            return true, captured_symbols, tree1 => tree2
-        else
-            return false, captured_symbols, tree1 => tree2
-        end
-    elseif length(c1) >= length(c2) && length(c2) > 0
-        found = (n1 == n2) || is_match_node(n2)
-        if is_match_node(n2)
-            if is_match_node(n1)
-                @warn "Value $n1 will not be captured, illegal use of '@'"
+        if is_capture_node(query_tree).is_match
+            if is_capture_node(target_tree).is_match
+                @warn "Illegal use of a capture node in the target tree, found at node $target_tree"
             else
-                push!(captured_symbols, capture_key(n2) => n1)
+                push!(captured_symbols,
+                    is_capture_node(query_tree).capture_key => capture_function(target_tree))
+            end
+        end
+        return found, captured_symbols, target_tree => query_tree
+    elseif length(c1) >= length(c2)
+        if is_capture_node(query_tree).is_match
+            if is_capture_node(target_tree).is_match
+                @warn "Illegal use of a capture node in the target tree, found at node $target_tree"
+            else
+                push!(captured_symbols,
+                    is_capture_node(query_tree).capture_key => capture_function(target_tree))
             end
         end
         subtree_results = map(
-            ci->match_tree(ci...; captured_symbols),
-            Iterators.take(zip(c1, c2), length(c2))
-           )
-        for (subtree_found, subtree_captures) in subtree_results
+                            ci->match_tree(ci...;
+                                           captured_symbols,
+                                           is_capture_node,
+                                           target_tree_nodevalue,
+                                           query_tree_nodevalue,
+                                           capture_function,
+                                           node_comparison_yields_true),
+                            Iterators.take(zip(c1, c2), length(c2)))
+        for (subtree_found, subtree_captures, _) in subtree_results
             for (k,v) in subtree_captures
                 # Add a new matched string only in no value exists for the key
                 # i.e. ignore multiple identical capture keys
@@ -130,9 +157,9 @@ function match_tree(tree1,
             end
             found &= subtree_found
         end
-        return found, captured_symbols, tree1=>tree2
-    else # query has more children
-        return false, captured_symbols, tree1=>tree2
+        return found, captured_symbols, target_tree=>query_tree
+    else
+        return false, captured_symbols, target_tree=>query_tree
     end
 end
 
@@ -141,10 +168,23 @@ end
     Query a tree with another tree. Both trees should support
     the `AbstractTrees` interface.
 """
-function query(target_tree, query_tree)
+function query(target_tree,
+               query_tree;
+               is_capture_node=is_capture_node,
+               target_tree_nodevalue=AbstractTrees.nodevalue,
+               query_tree_nodevalue=AbstractTrees.nodevalue,
+               capture_function=AbstractTrees.nodevalue,
+               node_comparison_yields_true=(args...)->false)
     matches = []
     for tn in PreOrderDFS(target_tree)
-        push!(matches, match_tree(tn, query_tree))
+        m = match_tree(tn,
+                       query_tree;
+                       is_capture_node,
+                       target_tree_nodevalue,
+                       query_tree_nodevalue,
+                       capture_function,
+                       node_comparison_yields_true)
+        push!(matches, m)
     end
     return matches
 end
