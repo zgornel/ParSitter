@@ -4,9 +4,7 @@ using AbstractTrees
 const DEFAULT_CAPTURE_SYM="@"
 
 # AbstractTrees interface for tree-sitter generated XML ASTs
- _remove_space(s)=strip(replace(s, r"[\s]+"=>" "))
 AbstractTrees.children(t::EzXML.Node) = collect(EzXML.eachelement(t));
-#AbstractTrees.AbstractTrees.nodevalue(t::EzXML.Node) = (t.name, _remove_space(EzXML.nodecontent(t)))
 AbstractTrees.nodevalue(t::EzXML.Node) = (t.name, string(t.ptr))
 AbstractTrees.parent(t::EzXML.Node) = t.parentnode
 AbstractTrees.nextsibling(t::EzXML.Node) = EzXML.nextelement(t)
@@ -44,8 +42,8 @@ end
 Checks that a query tree does not contain duplicate capture keys.
 """
 function check_tq_tree(tree::TreeQueryExpr)
-	captures = [n for n in PreOrderDFS(tree) if ParSitter.is_capture_node(n).is_match]
-	@assert length(captures) == length(unique(captures)) "Found non-unique capture keys in query"
+    captures = [n for n in PreOrderDFS(tree) if ParSitter.is_capture_node(n).is_match]
+    @assert length(captures) == length(unique(captures)) "Found non-unique capture keys in query"
 end
 
 
@@ -56,8 +54,8 @@ Postprocesses and parse the tree-sitter XML output to
 something that can be traversed to match a given query.
 """
 function build_xml_tree(tree_sitter_xml_ast::String)
-   tmp = replace(tree_sitter_xml_ast, "\n"=>"")
-   xml = EzXML.parsexml(tmp)
+    tmp = replace(tree_sitter_xml_ast, "\n"=>"")
+    xml = EzXML.parsexml(tmp)
 end
 
 """
@@ -81,27 +79,53 @@ end
 is_capture_node(n::TreeQueryExpr; capture_sym=DEFAULT_CAPTURE_SYM) = is_capture_node(n.head; capture_sym)
 is_capture_node(n; capture_sym=DEFAULT_CAPTURE_SYM) = (is_match=false, capture_key=nothing)
 
-#TODO (Corneliu): implement O(n) algorithm based on either:
-#                 (1) https://www.geeksforgeeks.org/check-binary-tree-subtree-another-binary-tree-set-2/
-#                 (2) https://www.geeksforgeeks.org/check-if-a-binary-tree-is-subtree-of-another-binary-tree-using-preorder-traversal-iterative/
+
 """
-    match_tree(target_tree,
-               query_tree;
-               captured_symbols=Dict(),
-               capture_sym=DEFAULT_CAPTURE_SYM,
-               target_tree_nodevalue=AbstractTrees.nodevalue,
-               query_tree_nodevalue=AbstractTrees.nodevalue,
-               capture_function=AbstractTrees.nodevalue,
-               node_comparison_yields_true=(args...)->false)
+    function match_tree(target_tree,
+                        query_tree;
+                        captured_symbols=Dict(),
+                        is_capture_node=is_capture_node,
+                        target_tree_nodevalue=AbstractTrees.nodevalue,
+                        query_tree_nodevalue=AbstractTrees.nodevalue,
+                        capture_function=AbstractTrees.nodevalue,
+                        node_comparison_yields_true=(args...)->false)
 
 Function that searches a `query_tree` into a `target_tree`. It returns a vector
 of subtree matches, where each element is a `Tuple` that contains the result
 of the match, any captured values and the trees that were compared.
-To capture a value, the `is_capture_node` must return true.
+To capture a value, the function `is_capture_node` must return `true` for a given query node.
 One example is using query nodes of  the form `"nodevalue@capture_variable"`.
 In the matching process, the query and target node values are extracted
-using `target_tree_nodevalue` and `target_tree_nodevalue` respectively and compared.
-If they match, the `target_tree` node value is captured by applying `capture_function` to the node.
+using `query_tree_nodevalue` and `target_tree_nodevalue` respectively and compared.
+If they match, the `target_tree` node value is captured by applying `capture_function` to the node
+and a `Dict("capture_variable"=>captured_target_node_value))`.
+
+# Example
+```
+julia> using ParSitter
+       using AbstractTrees
+
+       _query_tree_nodevalue(n) = ParSitter.is_capture_node(n).is_match ? split(n.head, "@")[1] : n.head
+       _target_tree_nodevalue(n)=string(n.head)
+       _capture_on_empty_query_value(t1,t2) = ParSitter.is_capture_node(t2).is_match && isempty(_query_tree_nodevalue(t2))
+
+       my_matcher(t,q) = ParSitter.match_tree(
+                              ParSitter.build_tq_tree(t),
+                              ParSitter.build_tq_tree(q);
+                              target_tree_nodevalue=_target_tree_nodevalue,
+                              query_tree_nodevalue=_query_tree_nodevalue,
+                              capture_function=n->n.head,
+                              node_comparison_yields_true=_capture_on_empty_query_value)
+
+       query = ("1@v0", "2", "@v2")   # - query means: capture in "v0" if target value is 1, match on 2, capture any symbol in "v2"
+
+       t=(1,2,10); my_matcher( t, query)[1:2] |> println
+       t=(10,2,11); my_matcher( t, query)[1:2] |> println
+       t=(1,2,3,4,5); my_matcher( t, query)[1:2] |> println
+(true, Dict{Any, Any}("v2" => 10, "v0" => 1))
+(false, Dict{Any, Any}("v2" => 11))
+(true, Dict{Any, Any}("v2" => 3, "v0" => 1))
+```
 """
 function match_tree(target_tree,
                     query_tree;
@@ -126,8 +150,10 @@ function match_tree(target_tree,
             if is_capture_node(target_tree).is_match
                 @warn "Illegal use of a capture node in the target tree, found at node $target_tree"
             else
-                push!(captured_symbols,
-                    is_capture_node(query_tree).capture_key => capture_function(target_tree))
+                # Add captured symbols only if node values match or the node comparison
+                # function yields a true value (i.e. for a global capture symbol or similar)
+                found && push!(captured_symbols,
+                            is_capture_node(query_tree).capture_key => capture_function(target_tree))
             end
         end
         return found, captured_symbols, target_tree => query_tree
@@ -136,7 +162,7 @@ function match_tree(target_tree,
             if is_capture_node(target_tree).is_match
                 @warn "Illegal use of a capture node in the target tree, found at node $target_tree"
             else
-                push!(captured_symbols,
+                found && push!(captured_symbols,
                     is_capture_node(query_tree).capture_key => capture_function(target_tree))
             end
         end
@@ -165,8 +191,52 @@ end
 
 
 """
-    Query a tree with another tree. Both trees should support
-    the `AbstractTrees` interface.
+Query a tree with another tree. This will match the `query_tree`
+with all substrees of `target_tree`. Both trees should support the
+`AbstractTrees` interface.
+
+# Example
+```julia
+julia> using ParSitter
+       using AbstractTrees
+
+       query = ("1@v0", "2", "@v2")   # - query means: capture in "v0" if target value is 1, match on 2, capture any symbol in "v2"
+       target = (1, 2, 3, (10, 2, 3)) # - only the (1,2,3) subtree will match, the second will not bevause of the 10;
+                                      # - @v2 will always capture values (due to `_capture_on_empty_query_value`)
+       query_tq = ParSitter.build_tq_tree(query)
+       target_tq = ParSitter.build_tq_tree(target)
+
+       _query_tree_nodevalue(n) = ParSitter.is_capture_node(n).is_match ? split(n.head, "@")[1] : n.head
+       _target_tree_nodevalue(n)=string(n.head)
+       _capture_on_empty_query_value(t1,t2) = ParSitter.is_capture_node(t2).is_match && isempty(_query_tree_nodevalue(t2))
+       print_tree(target_tq); println("---")
+       print_tree(query_tq); println("---")
+       r=ParSitter.query(target_tq,
+                               query_tq;
+                               target_tree_nodevalue=_target_tree_nodevalue,
+                               query_tree_nodevalue=_query_tree_nodevalue,
+                               capture_function=n->n.head,
+                               node_comparison_yields_true=_capture_on_empty_query_value)
+       map(t->t[1:2], r)
+1
+├─ 2
+├─ 3
+└─ 10
+   ├─ 2
+   └─ 3
+---
+"1@v0"
+├─ "2"
+└─ "@v2"
+---
+6-element Vector{Tuple{Bool, Dict{Any, Any}}}:
+ (1, Dict("v2" => 3, "v0" => 1))
+ (0, Dict())
+ (0, Dict())
+ (0, Dict("v2" => 3))
+ (0, Dict())
+ (0, Dict())
+```
 """
 function query(target_tree,
                query_tree;
