@@ -73,11 +73,11 @@ julia> ParSitter.is_capture_node("value@capture_key", capture_sym="@@")
 """
 is_capture_node(n::String; capture_sym=DEFAULT_CAPTURE_SYM) = begin
     is_match = !isnothing(match(Regex("[.]*$(capture_sym)[.]*"), n))
-    capture_key = is_match ? string(split(n, capture_sym)[2]) : nothing
+    capture_key = is_match ? string(split(n, capture_sym)[2]) : ""
     return (;is_match, capture_key)
 end
 is_capture_node(n::TreeQueryExpr; capture_sym=DEFAULT_CAPTURE_SYM) = is_capture_node(n.head; capture_sym)
-is_capture_node(n; capture_sym=DEFAULT_CAPTURE_SYM) = (is_match=false, capture_key=nothing)
+is_capture_node(n; capture_sym=DEFAULT_CAPTURE_SYM) = (is_match=false, capture_key="")
 
 
 """
@@ -135,46 +135,43 @@ function match_tree(target_tree,
                     query_tree_nodevalue=AbstractTrees.nodevalue,
                     capture_function=AbstractTrees.nodevalue,
                     node_comparison_yields_true=(args...)->false)
-	# Checks
-	check_tq_tree(query_tree)
-	# Initializations
+    # Initializations
     c1 = children(target_tree)
     c2 = children(query_tree)
     n1 = target_tree_nodevalue(target_tree)
     n2 = query_tree_nodevalue(query_tree)
+    is_capture_node_q, capture_key = is_capture_node(query_tree)
+    is_capture_node_t, _ = is_capture_node(target_tree)
     # Checks whether node values match or, we have a capture node with a capture condition
     found = (n1 == n2) || node_comparison_yields_true(target_tree, query_tree)
-	# Start recursion
+    # Start recursion
     if length(c1) == length(c2) == 0
-        if is_capture_node(query_tree).is_match
-            if is_capture_node(target_tree).is_match
+        if is_capture_node_q
+            if is_capture_node_t
                 @warn "Illegal use of a capture node in the target tree, found at node $target_tree"
             else
                 # Add captured symbols only if node values match or the node comparison
                 # function yields a true value (i.e. for a global capture symbol or similar)
-                found && push!(captured_symbols,
-                            is_capture_node(query_tree).capture_key => capture_function(target_tree))
+                found && push!(captured_symbols, capture_key => capture_function(target_tree))
             end
         end
-        return found, captured_symbols, target_tree => query_tree
+        return found, captured_symbols, target_tree=>query_tree
     elseif length(c1) >= length(c2)
-        if is_capture_node(query_tree).is_match
-            if is_capture_node(target_tree).is_match
+        if is_capture_node_q
+            if is_capture_node_t
                 @warn "Illegal use of a capture node in the target tree, found at node $target_tree"
             else
-                found && push!(captured_symbols,
-                    is_capture_node(query_tree).capture_key => capture_function(target_tree))
+                found && push!(captured_symbols, capture_key => capture_function(target_tree))
             end
         end
-        subtree_results = map(
-                            ci->match_tree(ci...;
-                                           captured_symbols,
-                                           is_capture_node,
-                                           target_tree_nodevalue,
-                                           query_tree_nodevalue,
-                                           capture_function,
-                                           node_comparison_yields_true),
-                            Iterators.take(zip(c1, c2), length(c2)))
+        subtree_results = [match_tree(t, q;
+                                      captured_symbols,
+                                      is_capture_node,
+                                      target_tree_nodevalue,
+                                      query_tree_nodevalue,
+                                      capture_function,
+                                      node_comparison_yields_true)
+                            for (t, q) in zip(c1, c2)]
         for (subtree_found, subtree_captures, _) in subtree_results
             for (k,v) in subtree_captures
                 # Add a new matched string only in no value exists for the key
@@ -207,16 +204,16 @@ julia> using ParSitter
        target_tq = ParSitter.build_tq_tree(target)
 
        _query_tree_nodevalue(n) = ParSitter.is_capture_node(n).is_match ? split(n.head, "@")[1] : n.head
-       _target_tree_nodevalue(n)=string(n.head)
+       _target_tree_nodevalue(n) = string(n.head)
        _capture_on_empty_query_value(t1,t2) = ParSitter.is_capture_node(t2).is_match && isempty(_query_tree_nodevalue(t2))
        print_tree(target_tq); println("---")
        print_tree(query_tq); println("---")
        r=ParSitter.query(target_tq,
-                               query_tq;
-                               target_tree_nodevalue=_target_tree_nodevalue,
-                               query_tree_nodevalue=_query_tree_nodevalue,
-                               capture_function=n->n.head,
-                               node_comparison_yields_true=_capture_on_empty_query_value)
+                         query_tq;
+                         target_tree_nodevalue=_target_tree_nodevalue,
+                         query_tree_nodevalue=_query_tree_nodevalue,
+                         capture_function=n->n.head,
+                         node_comparison_yields_true=_capture_on_empty_query_value)
        map(t->t[1:2], r)
 1
 ├─ 2
@@ -245,6 +242,8 @@ function query(target_tree,
                query_tree_nodevalue=AbstractTrees.nodevalue,
                capture_function=AbstractTrees.nodevalue,
                node_comparison_yields_true=(args...)->false)
+    # Checks
+    check_tq_tree(query_tree)
     matches = []
     for tn in PreOrderDFS(target_tree)
         m = match_tree(tn,

@@ -31,17 +31,21 @@ query = ParSitter.build_tq_tree(
        )
 #query = ParSitter.build_tq_tree( ("comment@captured_comment",) )
 
-_target_nodevalue = n->strip(string(n.name))
-_query_nodevalue=node->begin
-                        if ParSitter.is_capture_node(node).is_match
-                            v=split(node.head,"@")[1]
-                            return string(v)
-                        else
-                            return node.head
-                        end
-                    end
+_target_nodevalue(n) = strip(string(n.name))
+
+_query_nodevalue(n) = ifelse(ParSitter.is_capture_node(n).is_match,
+                             string(split(n.head,"@")[1]),
+                             n.head)
+
 _apply_regex_glob(tree1, tree2) = ParSitter.is_capture_node(tree2; capture_sym="@").is_match && _query_nodevalue(tree2) == "*"
-r = ParSitter.query(target.root,
+
+@time r = ParSitter.query(target.root,
+                    query;
+                    target_tree_nodevalue=_target_nodevalue,
+                    query_tree_nodevalue=_query_nodevalue,
+                    capture_function=node->strip(node.content),
+                    node_comparison_yields_true=_apply_regex_glob)
+@time r = ParSitter.query(target.root,
                     query;
                     target_tree_nodevalue=_target_nodevalue,
                     query_tree_nodevalue=_query_nodevalue,
