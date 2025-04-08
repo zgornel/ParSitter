@@ -3,9 +3,18 @@ using AbstractTrees
 
 const DEFAULT_CAPTURE_SYM="@"
 
+_strip_spaces(text; maxlen=10) = begin
+    _txt = replace(text, r"[\s]+"=>" ")
+    _txt[1:min(maxlen, length(_txt))]
+end
+
 # AbstractTrees interface for tree-sitter generated XML ASTs
 AbstractTrees.children(t::EzXML.Node) = collect(EzXML.eachelement(t));
-AbstractTrees.nodevalue(t::EzXML.Node) = (t.name, string(t.ptr))
+AbstractTrees.nodevalue(t::EzXML.Node) = (t.name,
+                                          string(t.ptr),
+                                          ("ROW:$(t["srow"]):$(t["erow"])", "COL:$(t["scol"]):$(t["ecol"])"),
+                                          _strip_spaces(t.content; maxlen=80)
+                                          )
 AbstractTrees.parent(t::EzXML.Node) = t.parentnode
 AbstractTrees.nextsibling(t::EzXML.Node) = EzXML.nextelement(t)
 AbstractTrees.prevsibling(t::EzXML.Node) = EzXML.prevelement(t)
