@@ -1,11 +1,29 @@
 using EzXML
 using AbstractTrees
+using Combinatorics
+using DataStructures
 
 const DEFAULT_CAPTURE_SYM="@"
 
 _strip_spaces(text; maxlen=10) = begin
     _txt = replace(text, r"[\s]+"=>" ")
     _txt[1:min(maxlen, length(_txt))]
+end
+
+# merge! for 2 MultiDicts
+Base.merge!(md1::MultiDict{K,V}, md2::MultiDict{K,V}) where {K,V} = begin
+    for (k, v2) in md2
+        v1 = get(md1, k, V[])
+        if !haskey(md1, k)
+            for vi in v2
+                push!(md1, k=>vi)  # add all values from md2
+            end
+        else
+            for vi in setdiff(v2, v1)  # add different values form md2
+                push!(md1, k=>vi)
+            end
+        end
+    end
 end
 
 # AbstractTrees interface for tree-sitter generated XML ASTs
@@ -37,6 +55,7 @@ the assumption is that the first element of each tuple is the
 head of the expression, the rest are children.
 """
 build_tq_tree(v) = TreeQueryExpr(v, TreeQueryExpr[])
+build_tq_tree(t::TreeQueryExpr) = t
 build_tq_tree(t::Tuple) = begin
     if length(t) == 1
         return TreeQueryExpr(t[1], TreeQueryExpr[])
@@ -92,7 +111,8 @@ is_capture_node(n; capture_sym=DEFAULT_CAPTURE_SYM) = (is_match=false, capture_k
 """
     function match_tree(target_tree,
                         query_tree;
-                        captured_symbols=Dict(),
+                        captured_symbols=MultiDict(),
+                        match_type=:strict,
                         is_capture_node=is_capture_node,
                         target_tree_nodevalue=AbstractTrees.nodevalue,
                         query_tree_nodevalue=AbstractTrees.nodevalue,
@@ -107,7 +127,7 @@ One example is using query nodes of  the form `"nodevalue@capture_variable"`.
 In the matching process, the query and target node values are extracted
 using `query_tree_nodevalue` and `target_tree_nodevalue` respectively and compared.
 If they match, the `target_tree` node value is captured by applying `capture_function` to the node
-and a `Dict("capture_variable"=>captured_target_node_value))`.
+and a `MultiDict("capture_variable"=>captured_target_node_value))`.
 
 # Example
 ```
@@ -131,14 +151,15 @@ julia> using ParSitter
        t=(1,2,10); my_matcher( t, query)[1:2] |> println
        t=(10,2,11); my_matcher( t, query)[1:2] |> println
        t=(1,2,3,4,5); my_matcher( t, query)[1:2] |> println
-(true, Dict{Any, Any}("v2" => 10, "v0" => 1))
-(false, Dict{Any, Any}("v2" => 11))
-(true, Dict{Any, Any}("v2" => 3, "v0" => 1))
+(true, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [10], "v0" => [1])))
+(false, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [11])))
+(true, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3], "v0" => [1])))
 ```
 """
 function match_tree(target_tree,
                     query_tree;
-                    captured_symbols=Dict(),
+                    captured_symbols=MultiDict(),
+                    match_type=:strict,
                     is_capture_node=is_capture_node,
                     target_tree_nodevalue=AbstractTrees.nodevalue,
                     query_tree_nodevalue=AbstractTrees.nodevalue,
@@ -164,7 +185,7 @@ function match_tree(target_tree,
                 found && push!(captured_symbols, capture_key => capture_function(target_tree))
             end
         end
-        return found, captured_symbols, target_tree=>query_tree
+        return found, captured_symbols, target_tree
     elseif length(c1) >= length(c2)
         if is_capture_node_q
             if is_capture_node_t
@@ -173,25 +194,54 @@ function match_tree(target_tree,
                 found && push!(captured_symbols, capture_key => capture_function(target_tree))
             end
         end
-        subtree_results = [match_tree(t, q;
-                                      captured_symbols,
-                                      is_capture_node,
-                                      target_tree_nodevalue,
-                                      query_tree_nodevalue,
-                                      capture_function,
-                                      node_comparison_yields_true)
-                            for (t, q) in zip(c1, c2)]
-        for (subtree_found, subtree_captures, _) in subtree_results
-            for (k,v) in subtree_captures
-                # Add a new matched string only in no value exists for the key
-                # i.e. ignore multiple identical capture keys
-                captured_symbols[k] = get(captured_symbols, k, v)
+        if match_type == :strict
+            # All query subtrees must match the target subtrees: in the same order,
+            # up to the last query tree. The rest of the target subtrees are ignored.
+            subtree_results = [match_tree(t, q;
+                                          captured_symbols,
+                                          match_type,
+                                          is_capture_node,
+                                          target_tree_nodevalue,
+                                          query_tree_nodevalue,
+                                          capture_function,
+                                          node_comparison_yields_true)
+                                for (t, q) in zip(c1, c2)]
+            for (subtree_found, subtree_captures, _) in subtree_results
+                merge!(captured_symbols, subtree_captures)
+                found &= subtree_found
             end
-            found &= subtree_found
+        else # match_type == :nonstrict
+            # Combinations of subtrees of the target tree are matched against
+            # the query tree; if any of them matches, the function returns
+            subtrees_found = Bool[]
+            for c1c in combinations(c1, length(c2))
+                _captured_symbols=MultiDict()
+                subtree_results = [match_tree(t, q;
+                                              captured_symbols=_captured_symbols,
+                                              match_type=:nonstrict,
+                                              is_capture_node,
+                                              target_tree_nodevalue,
+                                              query_tree_nodevalue,
+                                              capture_function,
+                                              node_comparison_yields_true)
+                                   for (t, q) in zip(c1c, c2)]
+			    # All subtrees of a specific combination must match
+				_found = all(first, subtree_results)
+                if _found
+                    for (_, subtree_captures, _) in subtree_results
+                        merge!(captured_symbols, subtree_captures)  # add matched symbols
+                    end
+                end
+                push!(subtrees_found, _found)  # store whether subtree combination was found
+            end
+            # Resolve matching:
+            # - any of the matched subtrees (from combinations will do)
+            # - logical AND is used to trasmit finding recursively upwards
+            found &= any(subtrees_found)
         end
-        return found, captured_symbols, target_tree=>query_tree
+        return found, captured_symbols, target_tree
     else
-        return false, captured_symbols, target_tree=>query_tree
+        return false, captured_symbols, target_tree
     end
 end
 
@@ -219,6 +269,7 @@ julia> using ParSitter
        print_tree(query_tq); println("---")
        r=ParSitter.query(target_tq,
                          query_tq;
+                         match_type=:strict,
                          target_tree_nodevalue=_target_tree_nodevalue,
                          query_tree_nodevalue=_query_tree_nodevalue,
                          capture_function=n->n.head,
@@ -235,17 +286,34 @@ julia> using ParSitter
 ├─ "2"
 └─ "@v2"
 ---
-6-element Vector{Tuple{Bool, Dict{Any, Any}}}:
- (1, Dict("v2" => 3, "v0" => 1))
- (0, Dict())
- (0, Dict())
- (0, Dict("v2" => 3))
- (0, Dict())
- (0, Dict())
+6-element Vector{Tuple{Bool, MultiDict{Any, Any}}}:
+ (1, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3], "v0" => [1])))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3])))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+
+julia> r=ParSitter.query(target_tq,
+                         query_tq;
+                         match_type=:strict,
+                         target_tree_nodevalue=_target_tree_nodevalue,
+                         query_tree_nodevalue=_query_tree_nodevalue,
+                         capture_function=n->n.head,
+                         node_comparison_yields_true=_capture_on_empty_query_value)
+       map(t->t[1:2], r)
+6-element Vector{Tuple{Bool, MultiDict{Any, Any}}}:
+ (1, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3, 10], "v0" => [1])))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (1, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3])))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
 ```
 """
 function query(target_tree,
                query_tree;
+               match_type=:strict,
                is_capture_node=is_capture_node,
                target_tree_nodevalue=AbstractTrees.nodevalue,
                query_tree_nodevalue=AbstractTrees.nodevalue,
@@ -257,6 +325,7 @@ function query(target_tree,
     for tn in PreOrderDFS(target_tree)
         m = match_tree(tn,
                        query_tree;
+                       match_type,
                        is_capture_node,
                        target_tree_nodevalue,
                        query_tree_nodevalue,
