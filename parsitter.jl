@@ -21,7 +21,7 @@ function get_arguments(args::Vector{String})
             help = "What is being parsed. Available 'file', 'directory', 'code'"
             arg_type = String
         "--language"
-            help = "Programming language. Available: 'python', 'julia', 'c', 'c#'"
+            help = "Programming language. Available: 'python', 'julia', 'c', 'c#', 'r'"
             arg_type = String
         "--print-code"
             help = "Whether to print out the code that is parsed"

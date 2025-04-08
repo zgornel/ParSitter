@@ -15,13 +15,15 @@ const LANGUAGE_MAP = Dict(
     "python" => "source.python",
     "julia" => "source.julia",
     "c" => "source.c",
-    "c#" => "source.csharp")
+    "c#" => "source.csharp",
+    "r" => "source.r")
 
 const FILE_EXTENSIONS = Dict(
     "python" => [".py"],
     "julia" => [".jl"],
     "c" => [".c", ".h"],
-    "c#" => [".cs"])
+    "c#" => [".cs"],
+    "r" => [".r"])
 
 function check_language(language, lang_map)
     @assert language in keys(lang_map) "Unrecognized language $language, exiting..."
@@ -103,7 +105,8 @@ function parse(dir::Directory, language::String)
     parses = Dict{String, String}()
     for (root, _ ,files) in walkdir(dir.name)
         for file in files
-            if any(endswith(file, _ext) for _ext in get(FILE_EXTENSIONS, language, []))
+            if any(endswith(lowercase(file), lowercase(_ext))
+                        for _ext in get(FILE_EXTENSIONS, language, []))
                 _file = File(joinpath(root, file))
                 _parsed = parse(_file, language)
                 for (k, v) in _parsed
