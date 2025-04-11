@@ -31,7 +31,7 @@ AbstractTrees.children(t::EzXML.Node) = collect(EzXML.eachelement(t));
 AbstractTrees.nodevalue(t::EzXML.Node) = (t.name,
                                           string(t.ptr),
                                           ("ROW:$(t["srow"]):$(t["erow"])", "COL:$(t["scol"]):$(t["ecol"])"),
-                                          _strip_spaces(t.content; maxlen=80)
+                                          _strip_spaces(t.content; maxlen=20)
                                           )
 AbstractTrees.parent(t::EzXML.Node) = t.parentnode
 AbstractTrees.nextsibling(t::EzXML.Node) = EzXML.nextelement(t)
