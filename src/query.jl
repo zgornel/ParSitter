@@ -5,7 +5,7 @@ using DataStructures
 
 const DEFAULT_CAPTURE_SYM="@"
 
-_strip_spaces(text; maxlen=10) = begin
+_strip_spaces(text; maxlen=80) = begin
     _txt = replace(text, r"[\s]+"=>" ")
     _txt[1:min(maxlen, length(_txt))]
 end
@@ -29,9 +29,9 @@ end
 # AbstractTrees interface for tree-sitter generated XML ASTs
 AbstractTrees.children(t::EzXML.Node) = collect(EzXML.eachelement(t));
 AbstractTrees.nodevalue(t::EzXML.Node) = (t.name,
-                                          string(t.ptr),
-                                          ("ROW:$(t["srow"]):$(t["erow"])", "COL:$(t["scol"]):$(t["ecol"])"),
-                                          _strip_spaces(t.content; maxlen=20)
+                                          "0x" * string(hash(t.ptr); base=16),
+                                          (row=("$(t["srow"]):$(t["erow"])"), col="($(t["scol"]):$(t["ecol"]))"),
+                                          _strip_spaces(t.content) |> x->ifelse(length(x)>=20, x[1:min(length(x),20)]*"...", x)
                                           )
 AbstractTrees.parent(t::EzXML.Node) = t.parentnode
 AbstractTrees.nextsibling(t::EzXML.Node) = EzXML.nextelement(t)
@@ -296,19 +296,19 @@ julia> using ParSitter
 
 julia> r=ParSitter.query(target_tq,
                          query_tq;
-                         match_type=:strict,
+                         match_type=:nonstrict,
                          target_tree_nodevalue=_target_tree_nodevalue,
                          query_tree_nodevalue=_query_tree_nodevalue,
                          capture_function=n->n.head,
                          node_comparison_yields_true=_capture_on_empty_query_value)
        map(t->t[1:2], r)
-6-element Vector{Tuple{Bool, MultiDict{Any, Any}}}:
- (1, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3, 10], "v0" => [1])))
- (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
- (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
- (1, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3])))
- (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
- (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+6-element Vector{Tuple{Bool, DataStructures.MultiDict{Any, Any}}}:
+ (1, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3, 10], "v0" => [1])))
+ (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3])))
+ (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
 ```
 """
 function query(target_tree,

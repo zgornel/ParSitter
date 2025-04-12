@@ -71,5 +71,6 @@ for i in tree_idxs # iterate over matches
     @info "v_identifier = \"$(_captures["v_identifier"]  |> first)\""
     @info "v_identifier2 = \"$(_captures["v_identifier2"] |> first)\""
     @info "v_arguments = \"$(_captures["v_arguments"]   |> first |> s->ParSitter._strip_spaces(s, maxlen=100))\""
-    #print_tree(qr[i], maxdepth=100);
+    print("---")
+    print_tree(last(qr[i]), maxdepth=100);
 end
