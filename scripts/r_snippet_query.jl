@@ -30,10 +30,10 @@ query = ParSitter.build_tq_tree(
 		("call", "identifier@v_identifier2", "arguments@v_arguments")))))
 
 # Query helper functions
-_target_nodevalue(n) = strip(string(n.name))
-_query_nodevalue(n) = ifelse(ParSitter.is_capture_node(n).is_match, string(split(n.head,"@")[1]), n.head)
-_apply_regex_glob(tn, qn) = ParSitter.is_capture_node(qn; capture_sym="@").is_match && _query_nodevalue(qn) == "*"
-_capture_function(n) = strip(n.content)
+_target_nodevalue(n)::String = string(strip(n.name))
+_query_nodevalue(n)::String = ifelse(ParSitter.is_capture_node(n).is_match, string(split(n.head,"@")[1]), string(n.head))
+_apply_regex_glob(tn, qn)::Bool = ParSitter.is_capture_node(qn; capture_sym="@").is_match && _query_nodevalue(qn) == "*"
+_capture_function(n)::String = string(strip(n.content))
 
 @time qr=ParSitter.query(target.root, query;
     match_type=:nonstrict,

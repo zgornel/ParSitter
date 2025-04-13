@@ -1,5 +1,5 @@
 # Define utiliy function for the types of trees and node captures used
-_capture_function(target_node) = target_node.head
+_capture_function(target_node) = string(target_node.head)
 
 _target_tree_nodevalue(target_node) = string(target_node.head)
 
@@ -42,8 +42,8 @@ _capture_on_empty_query_value(tt, qt) =
         @test sum(first, results)==1
         for (is_match, captures) in results
             if is_match
-                @test only(get(captures, "v1", -1)) == 1
-                @test only(get(captures, "v2", -1)) == 2
+                @test only(get(captures, "v1", -1)) == "1"
+                @test only(get(captures, "v2", -1)) == "2"
                 @test length(keys(captures)) == 2
             end
         end
@@ -65,8 +65,8 @@ _capture_on_empty_query_value(tt, qt) =
         @test any(first, results)
         for (is_match, captures) in results
             if is_match
-                @test only(get(captures, "v0", -1)) == 1
-                @test only(get(captures, "v2", -1)) == 3
+                @test only(get(captures, "v0", -1)) == "1"
+                @test only(get(captures, "v2", -1)) == "3"
                 @test length(keys(captures)) == 2
             end
         end
@@ -99,9 +99,9 @@ _capture_on_empty_query_value(tt, qt) =
         @test sum(first, results) == 4
         @test sum(p->!isempty(p[2]), results) == 3
         expected_captures = [
-            MultiDict("v2" => 3, "v0" => 1),
-            MultiDict("v2" => 6, "v0" => 4),
-            MultiDict("v2" => 1, "v0" => 1),
+            MultiDict("v2" => "3", "v0" => "1"),
+            MultiDict("v2" => "6", "v0" => "4"),
+            MultiDict("v2" => "1", "v0" => "1"),
             MultiDict()]
         for (is_match, captures) in results
             if is_match
@@ -145,14 +145,13 @@ end
         @test sum(p->!isempty(p[2]), results) == 4
 
         expected_captures = [
-            MultiDict(["v1"=>1, ["v2" => v for v in [2,3,-3]]...]),
-            MultiDict("v2" => 4, "v1" => 3),
-            MultiDict("v2" => -4, "v1" => -3),
-            MultiDict("v2" => 5, "v1" => 4)]
+            MultiDict(["v1"=> "1", ["v2" => v for v in ["2","3","-3"]]...]),
+            MultiDict("v2" => "4", "v1" => "3"),
+            MultiDict("v2" => "-4", "v1" => "-3"),
+            MultiDict("v2" => "5", "v1" => "4")]
         for (is_match, captures) in results
             if is_match
-				_captures = MultiDict{String, Int}(string(k)=>Int.(v) for (k,v) in captures)
-                @test _captures in expected_captures
+                @test captures in expected_captures
             end
         end
     end
@@ -189,15 +188,14 @@ end
         @test sum(p->!isempty(p[2]), results) == 2
 
         expected_captures = [
-            MultiDict(["v1"=>1,
-                       ["v2" => v for v in [3,-3]]...,
-                       ["v3"=>v for v in [4, -4]]...]),
-            MultiDict("v2" => 4, "v1" => 3, "v3"=>5)
+            MultiDict(["v1" => "1",
+                       ["v2" => v for v in ["3","-3"]]...,
+                       ["v3" => v for v in ["4", "-4"]]...]),
+            MultiDict("v2" => "4", "v1" => "3", "v3"=>"5")
         ]
         for (is_match, captures) in results
             if is_match
-				_captures = MultiDict{String, Int}(string(k)=>Int.(v) for (k,v) in captures)
-                @test _captures in expected_captures
+                @test captures in expected_captures
             end
         end
     end
@@ -234,12 +232,11 @@ end
         @test sum(p->!isempty(p[2]), results) == 1
 
         expected_captures = [
-            MultiDict("v3" => 4, "v1" => 1)
+            MultiDict("v3" => "4", "v1" => "1")
         ]
         for (is_match, captures) in results
             if is_match
-				_captures = MultiDict{String, Int}(string(k)=>Int.(v) for (k,v) in captures)
-                @test _captures in expected_captures
+                @test captures in expected_captures
             end
         end
     end

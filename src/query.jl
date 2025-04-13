@@ -39,8 +39,8 @@ AbstractTrees.prevsibling(t::EzXML.Node) = EzXML.prevelement(t)
 
 
 # AbstractTrees interface for Tuple-based S-expressions (query trees)
-mutable struct TreeQueryExpr
-    head
+mutable struct TreeQueryExpr{T}
+    head::T
     children::Vector{TreeQueryExpr}
 end
 
@@ -54,13 +54,22 @@ Build a tree query expression tree out of a nested tuple:
 the assumption is that the first element of each tuple is the
 head of the expression, the rest are children.
 """
-build_tq_tree(v) = TreeQueryExpr(v, TreeQueryExpr[])
+build_tq_tree(v::T) where T = TreeQueryExpr(v, TreeQueryExpr[])
 build_tq_tree(t::TreeQueryExpr) = t
+build_tq_tree(t::NTuple{N,T}) where {N,T} = begin
+    if length(t) == 1
+        return TreeQueryExpr{T}(t[1], TreeQueryExpr{T}[])
+    elseif length(t) > 1
+        return TreeQueryExpr{T}(t[1], TreeQueryExpr{T}[build_tq_tree(ti) for ti in t[2:end]])
+    else
+        @error "Input tuple is empty."
+    end
+end
 build_tq_tree(t::Tuple) = begin
     if length(t) == 1
         return TreeQueryExpr(t[1], TreeQueryExpr[])
     elseif length(t) > 1
-        return TreeQueryExpr(t[1], [build_tq_tree(ti) for ti in t[2:end]])
+        return TreeQueryExpr(t[1], TreeQueryExpr[build_tq_tree(ti) for ti in t[2:end]])
     else
         @error "Input tuple is empty."
     end
@@ -99,12 +108,12 @@ julia> ParSitter.is_capture_node("value@capture_key", capture_sym="@@")
 (is_match = false, capture_key = nothing)
 ```
 """
-is_capture_node(n::String; capture_sym=DEFAULT_CAPTURE_SYM) = begin
+is_capture_node(n::T; capture_sym=DEFAULT_CAPTURE_SYM) where T<:AbstractString= begin
     is_match = !isnothing(match(Regex("[.]*$(capture_sym)[.]*"), n))
     capture_key = is_match ? string(split(n, capture_sym)[2]) : ""
     return (;is_match, capture_key)
 end
-is_capture_node(n::TreeQueryExpr; capture_sym=DEFAULT_CAPTURE_SYM) = is_capture_node(n.head; capture_sym)
+is_capture_node(n::TreeQueryExpr{<:AbstractString}; capture_sym=DEFAULT_CAPTURE_SYM) = is_capture_node(n.head; capture_sym)
 is_capture_node(n; capture_sym=DEFAULT_CAPTURE_SYM) = (is_match=false, capture_key="")
 
 
@@ -158,7 +167,7 @@ julia> using ParSitter
 """
 function match_tree(target_tree,
                     query_tree;
-                    captured_symbols=MultiDict(),
+                    captured_symbols=MultiDict{String, String}(),
                     match_type=:strict,
                     is_capture_node=is_capture_node,
                     target_tree_nodevalue=AbstractTrees.nodevalue,
@@ -173,7 +182,7 @@ function match_tree(target_tree,
     is_capture_node_q, capture_key = is_capture_node(query_tree)
     is_capture_node_t, _ = is_capture_node(target_tree)
     # Checks whether node values match or, we have a capture node with a capture condition
-    found = (n1 == n2) || node_comparison_yields_true(target_tree, query_tree)
+    found::Bool = (n1 == n2) || node_comparison_yields_true(target_tree, query_tree)
     # Start recursion
     if length(c1) == length(c2) == 0
         if is_capture_node_q
@@ -215,7 +224,7 @@ function match_tree(target_tree,
             # the query tree; if any of them matches, the function returns
             subtrees_found = Bool[]
             for c1c in combinations(c1, length(c2))
-                _captured_symbols=MultiDict()
+                _captured_symbols=MultiDict{String, String}()
                 subtree_results = [match_tree(t, q;
                                               captured_symbols=_captured_symbols,
                                               match_type=:nonstrict,
