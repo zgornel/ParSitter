@@ -167,7 +167,7 @@ julia> using ParSitter
 """
 function match_tree(target_tree,
                     query_tree;
-                    captured_symbols=MultiDict{String, String}(),
+                    captured_symbols=MultiDict(),
                     match_type=:strict,
                     is_capture_node=is_capture_node,
                     target_tree_nodevalue=AbstractTrees.nodevalue,
@@ -224,7 +224,7 @@ function match_tree(target_tree,
             # the query tree; if any of them matches, the function returns
             subtrees_found = Bool[]
             for c1c in combinations(c1, length(c2))
-                _captured_symbols=MultiDict{String, String}()
+                _captured_symbols=MultiDict()
                 subtree_results = [match_tree(t, q;
                                               captured_symbols=_captured_symbols,
                                               match_type=:nonstrict,

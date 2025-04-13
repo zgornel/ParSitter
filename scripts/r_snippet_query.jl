@@ -12,7 +12,7 @@ _R_code = (ParSitter.Code("""
 	"""), "r")
 #_parsed = ParSitter.parse(_PYTHON...)
 #_parsed = ParSitter.parse(_C...)
-_parsed = ParSitter.parse(_R_file...)
+_parsed = ParSitter.parse(_R_code...)
 _parsed = first(values(_parsed))
 
 target = ParSitter.build_xml_tree(_parsed)
