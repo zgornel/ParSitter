@@ -186,7 +186,7 @@ end
                                   capture_function=_capture_function,
                                   node_comparison_yields_true=_capture_on_empty_query_value)
         @test sum(first, results) == 2  # two full matches
-        @test sum(p->!isempty(p[2]), results) == 4
+        @test sum(p->!isempty(p[2]), results) == 2
 
         expected_captures = [
             MultiDict(["v1"=>1,
@@ -231,7 +231,7 @@ end
                                   capture_function=_capture_function,
                                   node_comparison_yields_true=_capture_on_empty_query_value)
         @test sum(first, results) == 1  # the only match
-        @test sum(p->!isempty(p[2]), results) == 4
+        @test sum(p->!isempty(p[2]), results) == 1
 
         expected_captures = [
             MultiDict("v3" => 4, "v1" => 1)
@@ -272,7 +272,7 @@ end
                                   capture_function=_capture_function,
                                   node_comparison_yields_true=_capture_on_empty_query_value)
         @test sum(first, results) == 0  # no match
-        @test sum(p->!isempty(p[2]), results) == 4
+        @test sum(p->!isempty(p[2]), results) == 2
     end
 end
 

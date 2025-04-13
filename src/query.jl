@@ -186,7 +186,7 @@ function match_tree(target_tree,
             end
         end
         return found, captured_symbols, target_tree
-    elseif length(c1) >= length(c2)
+    elseif length(c1) >= length(c2) && treeheight(c1) >= treeheight(c2)
         if is_capture_node_q
             if is_capture_node_t
                 @warn "Illegal use of a capture node in the target tree, found at node $target_tree"
