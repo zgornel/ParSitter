@@ -2,6 +2,7 @@ using EzXML
 using AbstractTrees
 using Combinatorics
 using DataStructures
+using AutoHashEquals
 
 const DEFAULT_CAPTURE_SYM="@"
 
@@ -39,7 +40,7 @@ AbstractTrees.prevsibling(t::EzXML.Node) = EzXML.prevelement(t)
 
 
 # AbstractTrees interface for Tuple-based S-expressions (query trees)
-mutable struct TreeQueryExpr{T}
+@auto_hash_equals struct TreeQueryExpr{T}
     head::T
     children::Vector{TreeQueryExpr}
 end
@@ -74,6 +75,46 @@ build_tq_tree(t::Tuple) = begin
         @error "Input tuple is empty."
     end
 end
+
+
+"""
+Convert a tree `t` to a `TreeQueryExpr`. The node value is returned
+by `nodevalue` and children of the node returned by `children`.
+"""
+Base.convert(::Type{TreeQueryExpr},
+             t::S;
+             nodevalue=AbstractTrees.nodevalue,
+             children=AbstractTrees.children
+            ) where {S}= begin
+    c = children(t)
+    if length(c) > 0
+        return TreeQueryExpr(nodevalue(t), TreeQueryExpr[Base.convert(TreeQueryExpr, ci; nodevalue) for ci in c])
+    else # length(c) == 0
+        return TreeQueryExpr(nodevalue(t), TreeQueryExpr[])
+    end
+end
+
+"""
+Convert from `TreeQueryExpr` to a Tuple.
+```
+using ParSitter
+tt=(1,2,(3,(4,5,(6,),7,5)));
+tq = ParSitter.build_tq_tree(tt)
+tt2 = convert(Tuple, tq)
+```
+"""
+Base.convert(::Type{Tuple}, t::TreeQueryExpr) = begin
+	_destructure(t) = ifelse(length(t)==1, first(t), t)
+    c = children(t)
+    if length(c) > 1
+        return (AbstractTrees.nodevalue(t), [_destructure(Base.convert(Tuple, ci)) for ci in c]...)
+    elseif length(c) == 1
+        return (AbstractTrees.nodevalue(t), Base.convert(Tuple, only(c)))
+    else # length(c) == 0
+        return (AbstractTrees.nodevalue(t),)
+    end
+end
+
 
 """
 Checks that a query tree does not contain duplicate capture keys.
