@@ -12,5 +12,7 @@ _R_code = (ParSitter.Code("""
 _parsed = ParSitter.parse(_R_code...)
 tt = ParSitter.build_xml_tree(_parsed[""])
 ttc = convert(ParSitter.TreeQueryExpr, tt.root; nodevalue=n->n.name)
-ttc |> print_tree
+
+ttc |> x->print_tree(x, maxdepth=100)
+
 convert(Tuple, ttc) |> println
