@@ -161,6 +161,7 @@ is_capture_node(n; capture_sym=DEFAULT_CAPTURE_SYM) = (is_match=false, capture_k
 """
     function match_tree(target_tree,
                         query_tree;
+                        match_cache=Dict(),
                         captured_symbols=MultiDict(),
                         match_type=:strict,
                         is_capture_node=is_capture_node,
@@ -178,7 +179,8 @@ In the matching process, the query and target node values are extracted
 using `query_tree_nodevalue` and `target_tree_nodevalue` respectively and compared.
 If they match, the `target_tree` node value is captured by applying `capture_function` to the node
 and a `MultiDict("capture_variable"=>captured_target_node_value))`.
-
+Tree comparisons are also hashed and the result as well as captured symbols are stored
+in `match_cache` for quick retrieval.
 # Example
 ```
 julia> using ParSitter
@@ -208,6 +210,7 @@ julia> using ParSitter
 """
 function match_tree(target_tree,
                     query_tree;
+                    match_cache=Dict(),
                     captured_symbols=MultiDict(),
                     match_type=:strict,
                     is_capture_node=is_capture_node,
@@ -224,6 +227,11 @@ function match_tree(target_tree,
     is_capture_node_t, _ = is_capture_node(target_tree)
     # Checks whether node values match or, we have a capture node with a capture condition
     found::Bool = (n1 == n2) || node_comparison_yields_true(target_tree, query_tree)
+    # Check hashes, return if found
+    _hash = hash((target_tree, query_tree))
+    if _hash in keys(match_cache)
+        return match_cache[_hash]..., target_tree
+    end
     # Start recursion
     if length(c1) == length(c2) == 0
         if is_capture_node_q
@@ -235,6 +243,7 @@ function match_tree(target_tree,
                 found && push!(captured_symbols, capture_key => capture_function(target_tree))
             end
         end
+        push!(match_cache, _hash=>(found, captured_symbols))
         return found, captured_symbols, target_tree
     elseif length(c1) >= length(c2) && treeheight(c1) >= treeheight(c2)
         if is_capture_node_q
@@ -247,7 +256,9 @@ function match_tree(target_tree,
         if match_type == :strict
             # All query subtrees must match the target subtrees: in the same order,
             # up to the last query tree. The rest of the target subtrees are ignored.
+            _match_cache = Dict()
             subtree_results = [match_tree(t, q;
+                                          match_cache=_match_cache,
                                           captured_symbols,
                                           match_type,
                                           is_capture_node,
@@ -264,9 +275,11 @@ function match_tree(target_tree,
             # Combinations of subtrees of the target tree are matched against
             # the query tree; if any of them matches, the function returns
             subtrees_found = Bool[]
+            _match_cache = Dict()
             for c1c in combinations(c1, length(c2))
                 _captured_symbols=MultiDict()
                 subtree_results = [match_tree(t, q;
+                                              match_cache=_match_cache,
                                               captured_symbols=_captured_symbols,
                                               match_type=:nonstrict,
                                               is_capture_node,
@@ -289,8 +302,10 @@ function match_tree(target_tree,
             # - logical AND is used to trasmit finding recursively upwards
             found &= any(subtrees_found)
         end
+        push!(match_cache, _hash=>(found, captured_symbols))
         return found, captured_symbols, target_tree
     else
+        push!(match_cache, _hash=>(false, captured_symbols))
         return false, captured_symbols, target_tree
     end
 end
@@ -368,7 +383,8 @@ function query(target_tree,
                target_tree_nodevalue=AbstractTrees.nodevalue,
                query_tree_nodevalue=AbstractTrees.nodevalue,
                capture_function=AbstractTrees.nodevalue,
-               node_comparison_yields_true=(args...)->false)
+               node_comparison_yields_true=(args...)->false,
+               match_cache=Dict())
     # Checks
     check_tq_tree(query_tree)
     matches = []
@@ -380,7 +396,8 @@ function query(target_tree,
                        target_tree_nodevalue,
                        query_tree_nodevalue,
                        capture_function,
-                       node_comparison_yields_true)
+                       node_comparison_yields_true,
+                       match_cache)
         push!(matches, m)
     end
     return matches
