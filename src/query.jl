@@ -85,7 +85,7 @@ Base.convert(::Type{TreeQueryExpr},
              t::S;
              nodevalue=AbstractTrees.nodevalue,
              children=AbstractTrees.children
-            ) where {S}= begin
+            ) where {S} = begin
     c = children(t)
     if length(c) > 0
         return TreeQueryExpr(nodevalue(t), TreeQueryExpr[Base.convert(TreeQueryExpr, ci; nodevalue) for ci in c])
@@ -95,7 +95,7 @@ Base.convert(::Type{TreeQueryExpr},
 end
 
 """
-Convert from `TreeQueryExpr` to a Tuple.
+Convert from a tree-like object to a Tuple.
 ```
 using ParSitter
 tt=(1,2,(3,(4,5,(6,),7,5)));
@@ -103,15 +103,19 @@ tq = ParSitter.build_tq_tree(tt)
 tt2 = convert(Tuple, tq)
 ```
 """
-Base.convert(::Type{Tuple}, t::TreeQueryExpr) = begin
-	_destructure(t) = ifelse(length(t)==1, first(t), t)
+Base.convert(::Type{Tuple},
+             t::S;
+             nodevalue=AbstractTrees.nodevalue,  # note: this is apparently not used
+             children=AbstractTrees.children     # and the default AbstractTrees.nodevalue is used
+            ) where {S} = begin
+    _destructure(t) = ifelse(length(t)==1, first(t), t)
     c = children(t)
     if length(c) > 1
-        return (AbstractTrees.nodevalue(t), [_destructure(Base.convert(Tuple, ci)) for ci in c]...)
+        return (nodevalue(t), [_destructure(Base.convert(Tuple, ci)) for ci in c]...)
     elseif length(c) == 1
-        return (AbstractTrees.nodevalue(t), Base.convert(Tuple, only(c)))
+        return (nodevalue(t), Base.convert(Tuple, only(c)))
     else # length(c) == 0
-        return (AbstractTrees.nodevalue(t),)
+        return (nodevalue(t),)
     end
 end
 
@@ -288,8 +292,8 @@ function match_tree(target_tree,
                                               capture_function,
                                               node_comparison_yields_true)
                                    for (t, q) in zip(c1c, c2)]
-			    # All subtrees of a specific combination must match
-				_found = all(first, subtree_results)
+                # All subtrees of a specific combination must match
+                _found = all(first, subtree_results)
                 if _found
                     for (_, subtree_captures, _) in subtree_results
                         merge!(captured_symbols, subtree_captures)  # add matched symbols
