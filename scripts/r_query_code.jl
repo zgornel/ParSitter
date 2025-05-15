@@ -8,8 +8,7 @@ _R_code = (ParSitter.Code("""
                                            P80P20 + Study_degree + ISCED_origin + Year +
                                            (1 | Family),
                                   data = practiques,
-                                  family = binomial(link = "linear"),
-                                  family = trinomial(link = "linear"))
+                                  family = binomial(link = "linear"))
         """), "r")
 #_parsed = ParSitter.parse(_PYTHON...)
 #_parsed = ParSitter.parse(_C...)
@@ -24,7 +23,7 @@ query = ParSitter.build_tq_tree(
             ("*",                       # -> family = binomial(link=...)
                 "family",               # -> family
                     ("*",                      # -> binomial(link=...)
-                        "binomial",            # -> binomial
+                        "@family",            # -> binomial
                         ("*",                   # -> argument
                             ("*",
                              "@identifier",
@@ -40,8 +39,8 @@ _apply_regex_glob(tn, qn) = ParSitter.is_capture_node(qn; capture_sym="@").is_ma
 _capture_function(n) = (v=strip(replace(n.content, r"[\s]"=>"")), srow=n["srow"], erow=n["erow"], scol=n["scol"], ecol=n["ecol"])
 
 
-RULES = [(name="glmmTMB binomial logit link type", query=query, type="acceptable", check_for=Dict("identifier"=>"link", "string"=>"logit")),
-#         (name="glmmTMB trinomial logit link type", query=query, type="acceptable", check_for=Dict("identifier"=>"link", "string"=>"logit"))
+RULES = [(name="glmmTMB binomial logit link type", query=query, type="acceptable", check_for=Dict("family"=>"binomial", "identifier"=>"link", "string"=>"logit")),
+         (name="glmmTMB gaussian logit link type", query=query, type="acceptable", check_for=Dict("family"=>"gaussian", "identifier"=>"link", "string"=>"logit"))
         ]
 apply_rules(code_tree, rules) = begin
     for r in rules
@@ -61,6 +60,7 @@ apply_rules(code_tree, rules) = begin
                     for (qr_vi, srow, _, scol, _) in qr_v
                         if r.type == "acceptable"
                             #check that if qr_k ==k ⟹  qr_v == v
+                            #TODO: Implement a formula template to apply the values to.
                             if (qr_k == k) && !(qr_vi == v)
                                 @warn "$(r.name): expected value '$v', got in code '$(qr_vi)'  row=$(srow), col=$(scol)"
                             end
