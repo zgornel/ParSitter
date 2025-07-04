@@ -406,3 +406,32 @@ function query(target_tree,
     end
     return matches
 end
+
+
+"""
+    Function that returns captured values from a query. If the key does not
+    exist `nothing` is returned.
+"""
+get_capture(qr::AbstractVector, key) = begin
+    qrf = filter(first, qr)  # get only matched queries
+    result = []
+    for qri in qr
+        try
+            r = get_capture(qri, key)
+            !isnothing(r) && push!(result, r)
+        catch e
+            rethrow()
+        end
+    end
+    ifelse(!isempty(result), result, nothing)
+end
+
+get_capture(qr::Tuple, key) = begin
+    _, captures = qr
+    values = get(captures, key, nothing)
+    values == nothing && return nothing
+    if values isa Vector && length(values) > 1
+        throw(ErrorException("Ambigous capture, more than 1 match for key \"$key\""))
+    end
+    return first(value for value in values)
+end
