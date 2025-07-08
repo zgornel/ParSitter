@@ -16,7 +16,7 @@ const LANGUAGE_MAP = Dict(
     "julia" => "source.julia",
     "c" => "source.c",
     "c#" => "source.csharp",
-    "r" => "source.r")
+    "r" => "source.R")
 
 const FILE_EXTENSIONS = Dict(
     "python" => [".py"],
