@@ -10,6 +10,6 @@ end
 PEType2(x::Int) = PEType(x)
 PEType2(x::AbstractFloat) = PEType2(0)
 
-function pe_function(args...;kwargs...)
+function pe_function(args...; kwargs...)
     return "pe_function"
 end

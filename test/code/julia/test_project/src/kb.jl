@@ -1,5 +1,5 @@
 const KB_CONST = "A KB constant"
-kb_function(args...;kwargs...) = begin
+kb_function(args...; kwargs...) = begin
     return "kb_function"
 end
 

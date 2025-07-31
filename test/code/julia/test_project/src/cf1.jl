@@ -7,7 +7,7 @@ function cf1_function(args...; kwargs...)
 end
 
 cf1_function_2(args...; kwargs...) = begin
-    "cf1_function_2" * " calls " *  cf1_function(args...)  # function call
+    "cf1_function_2" * " calls " * cf1_function(args...)  # function call
 end
 
 cf1_function_3(args...; kwargs...) = begin

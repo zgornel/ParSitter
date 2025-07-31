@@ -1,4 +1,4 @@
-function cf2_function(args...;kwargs...)
+function cf2_function(args...; kwargs...)
     return "cf2_function"
 end
 
@@ -21,4 +21,4 @@ print(devnull, UType2())
 print(devnull, u_function_2(u_function_3()))
 
 using .TestModuleJulia
-foo_in_a_module(1,2,3)  # call directly from module
+foo_in_a_module(1, 2, 3)  # call directly from module

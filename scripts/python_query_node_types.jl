@@ -27,30 +27,36 @@ target = ParSitter.build_xml_tree(_parsed)
 # │  └─ ("block", "Ptr{EzXML._Node} @0x000055bdc5de1b50")
 
 query = ParSitter.build_tq_tree(
-           ("import_from_statement", ("dotted_name@dotted_name_val", ), ("dotted_name@dotted_name_val2") )
-       )
+    ("import_from_statement", ("dotted_name@dotted_name_val",), ("dotted_name@dotted_name_val2"))
+)
 #query = ParSitter.build_tq_tree( ("comment@captured_comment",) )
 
 _target_nodevalue(n) = strip(string(n.name))
 
-_query_nodevalue(n) = ifelse(ParSitter.is_capture_node(n).is_match,
-                             string(split(n.head,"@")[1]),
-                             n.head)
+_query_nodevalue(n) = ifelse(
+    ParSitter.is_capture_node(n).is_match,
+    string(split(n.head, "@")[1]),
+    n.head
+)
 
-_apply_regex_glob(tree1, tree2) = ParSitter.is_capture_node(tree2; capture_sym="@").is_match && _query_nodevalue(tree2) == "*"
+_apply_regex_glob(tree1, tree2) = ParSitter.is_capture_node(tree2; capture_sym = "@").is_match && _query_nodevalue(tree2) == "*"
 
-@time r = ParSitter.query(target.root,
-                    query;
-                    target_tree_nodevalue=_target_nodevalue,
-                    query_tree_nodevalue=_query_nodevalue,
-                    capture_function=node->strip(node.content),
-                    node_comparison_yields_true=_apply_regex_glob)
-@time r = ParSitter.query(target.root,
-                    query;
-                    target_tree_nodevalue=_target_nodevalue,
-                    query_tree_nodevalue=_query_nodevalue,
-                    capture_function=node->strip(node.content),
-                    node_comparison_yields_true=_apply_regex_glob)
+@time r = ParSitter.query(
+    target.root,
+    query;
+    target_tree_nodevalue = _target_nodevalue,
+    query_tree_nodevalue = _query_nodevalue,
+    capture_function = node -> strip(node.content),
+    node_comparison_yields_true = _apply_regex_glob
+)
+@time r = ParSitter.query(
+    target.root,
+    query;
+    target_tree_nodevalue = _target_nodevalue,
+    query_tree_nodevalue = _query_nodevalue,
+    capture_function = node -> strip(node.content),
+    node_comparison_yields_true = _apply_regex_glob
+)
 
-r_true = filter(x->x[1], r)
+r_true = filter(x -> x[1], r)
 @show r_true[1][1:2]

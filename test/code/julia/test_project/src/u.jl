@@ -6,15 +6,15 @@ const U_CONSTANT = 0
 # - without and `begin` `end`
 # - simple inline definition
 # - with macro in front of function definition
-function u_function(args...;kwargs...)
+function u_function(args...; kwargs...)
     return "u_function"
 end
 
-u_function_2(args...;kwargs...) = begin
+u_function_2(args...; kwargs...) = begin
     return "u_function_2"
 end
 
-u_function_3(args...;kwargs...) = "u_function_3"
+u_function_3(args...; kwargs...) = "u_function_3"
 
 
 # Define structs and abstract types
