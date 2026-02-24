@@ -1,0 +1,4 @@
+[deps]
+ParSitter = "bdeffda0-9f75-4d6c-9dad-1bfd8db84b8f"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterMermaid = "a078cd44-4d9c-4618-b545-3ab9d77f9177"
