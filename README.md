@@ -27,6 +27,8 @@ If escape chars are present, use the `--escape-chars` option:
 ```
 $ julia parsitter.jl 'def foo():\n\tpass' --input-type code --escape-chars --language python --log-level debug
 ```
+## Differences from TreeSitter.jl
+This package differs from [TreeSitter.jl](https://github.com/MichaelHatherly/TreeSitter.jl) in that it calls the tree-sitter parsing cli externally and reads directly the XML result. TreeSitter.jl provides a much tighter integration with tree-sitter parsers and the querying mechanisms. ParSitter provides a looser coupling with tree-sitter and a more flexible querying API.
 
 ## License
 
