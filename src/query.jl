@@ -41,6 +41,13 @@ AbstractTrees.prevsibling(t::EzXML.Node) = EzXML.prevelement(t)
 
 
 # AbstractTrees interface for Tuple-based S-expressions (query trees)
+"""
+	TreeQueryExpr{T}(head::T, children::Vector{TreeQueryExpr})
+
+Structure used for the `AbstractTrees` interface. It allows to use
+Tuple-based S-expressions as query trees. ::T is the type of value
+used for the head as well as children. Usually, nodes are `::String`s.
+"""
 @auto_hash_equals struct TreeQueryExpr{T}
     head::T
     children::Vector{TreeQueryExpr}
@@ -98,12 +105,6 @@ end
 
 """
 Convert from a tree-like object to a Tuple.
-```
-using ParSitter
-tt=(1,2,(3,(4,5,(6,),7,5)));
-tq = ParSitter.build_tq_tree(tt)
-tt2 = convert(Tuple, tq)
-```
 """
 Base.convert(
     ::Type{Tuple},
@@ -178,42 +179,18 @@ is_capture_node(n; capture_sym = DEFAULT_CAPTURE_SYM) = (is_match = false, captu
                         node_comparison_yields_true=(args...)->false)
 
 Function that searches a `query_tree` into a `target_tree`. It returns a vector
-of subtree matches, where each element is a `Tuple` that contains the result
+of sub-tree matches, where each element is a `Tuple` that contains the result
 of the match, any captured values and the trees that were compared.
 To capture a value, the function `is_capture_node` must return `true` for a given query node.
 One example is using query nodes of  the form `"nodevalue@capture_variable"`.
 In the matching process, the query and target node values are extracted
 using `query_tree_nodevalue` and `target_tree_nodevalue` respectively and compared.
 If they match, the `target_tree` node value is captured by applying `capture_function` to the node
-and a `MultiDict("capture_variable"=>captured_target_node_value))`.
-Tree comparisons are also hashed and the result as well as captured symbols are stored
+and a `MultiDict("capture_variable"=>captured_target_node_value))`. The `match_type` argument, for
+`:strict` values will require trees to have the exact number of sub-trees and/or leaves. If the
+value is set to `:nonstrict`, additional leaves and sub-trees of the target tree will be ignored
+when matching. Tree comparisons are also hashed and the result as well as captured symbols are stored
 in `match_cache` for quick retrieval.
-# Example
-```
-julia> using ParSitter
-       using AbstractTrees
-
-       _query_tree_nodevalue(n) = ParSitter.is_capture_node(n).is_match ? split(n.head, "@")[1] : n.head
-       _target_tree_nodevalue(n)=string(n.head)
-       _capture_on_empty_query_value(t1,t2) = ParSitter.is_capture_node(t2).is_match && isempty(_query_tree_nodevalue(t2))
-
-       my_matcher(t,q) = ParSitter.match_tree(
-                              ParSitter.build_tq_tree(t),
-                              ParSitter.build_tq_tree(q);
-                              target_tree_nodevalue=_target_tree_nodevalue,
-                              query_tree_nodevalue=_query_tree_nodevalue,
-                              capture_function=n->n.head,
-                              node_comparison_yields_true=_capture_on_empty_query_value)
-
-       query = ("1@v0", "2", "@v2")   # - query means: capture in "v0" if target value is 1, match on 2, capture any symbol in "v2"
-
-       t=(1,2,10); my_matcher( t, query)[1:2] |> println
-       t=(10,2,11); my_matcher( t, query)[1:2] |> println
-       t=(1,2,3,4,5); my_matcher( t, query)[1:2] |> println
-(true, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [10], "v0" => [1])))
-(false, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [11])))
-(true, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3], "v0" => [1])))
-```
 """
 function match_tree(
         target_tree,
@@ -263,8 +240,8 @@ function match_tree(
             end
         end
         if match_type == :strict
-            # All query subtrees must match the target subtrees: in the same order,
-            # up to the last query tree. The rest of the target subtrees are ignored.
+            # All query sub-trees must match the target sub-trees: in the same order,
+            # up to the last query tree. The rest of the target sub-trees are ignored.
             _match_cache = Dict()
             subtree_results = [
                 match_tree(
@@ -285,7 +262,7 @@ function match_tree(
                 found &= subtree_found
             end
         else # match_type == :nonstrict
-            # Combinations of subtrees of the target tree are matched against
+            # Combinations of sub-trees of the target tree are matched against
             # the query tree; if any of them matches, the function returns
             subtrees_found = Bool[]
             _match_cache = Dict()
@@ -305,18 +282,18 @@ function match_tree(
                         )
                         for (t, q) in zip(c1c, c2)
                 ]
-                # All subtrees of a specific combination must match
+                # All sub-trees of a specific combination must match
                 _found = all(first, subtree_results)
                 if _found
                     for (_, subtree_captures, _) in subtree_results
                         merge!(captured_symbols, subtree_captures)  # add matched symbols
                     end
                 end
-                push!(subtrees_found, _found)  # store whether subtree combination was found
+                push!(subtrees_found, _found)  # store whether sub-tree combination was found
             end
             # Resolve matching:
-            # - any of the matched subtrees (from combinations will do)
-            # - logical AND is used to trasmit finding recursively upwards
+            # - any of the matched sub-trees (from combinations will do)
+            # - logical AND is used to transmit finding recursively upwards
             found &= any(subtrees_found)
         end
         push!(match_cache, _hash => (found, captured_symbols))
@@ -330,68 +307,8 @@ end
 
 """
 Query a tree with another tree. This will match the `query_tree`
-with all substrees of `target_tree`. Both trees should support the
+with all sub-trees of `target_tree`. Both trees should support the
 `AbstractTrees` interface.
-
-# Example
-```julia
-julia> using ParSitter
-       using AbstractTrees
-
-       query = ("1@v0", "2", "@v2")   # - query means: capture in "v0" if target value is 1, match on 2, capture any symbol in "v2"
-       target = (1, 2, 3, (10, 2, 3)) # - only the (1,2,3) subtree will match, the second will not bevause of the 10;
-                                      # - @v2 will always capture values (due to `_capture_on_empty_query_value`)
-       query_tq = ParSitter.build_tq_tree(query)
-       target_tq = ParSitter.build_tq_tree(target)
-
-       _query_tree_nodevalue(n) = ParSitter.is_capture_node(n).is_match ? split(n.head, "@")[1] : n.head
-       _target_tree_nodevalue(n) = string(n.head)
-       _capture_on_empty_query_value(t1,t2) = ParSitter.is_capture_node(t2).is_match && isempty(_query_tree_nodevalue(t2))
-       print_tree(target_tq); println("---")
-       print_tree(query_tq); println("---")
-       r=ParSitter.query(target_tq,
-                         query_tq;
-                         match_type=:strict,
-                         target_tree_nodevalue=_target_tree_nodevalue,
-                         query_tree_nodevalue=_query_tree_nodevalue,
-                         capture_function=n->n.head,
-                         node_comparison_yields_true=_capture_on_empty_query_value)
-       map(t->t[1:2], r)
-1
-├─ 2
-├─ 3
-└─ 10
-   ├─ 2
-   └─ 3
----
-"1@v0"
-├─ "2"
-└─ "@v2"
----
-6-element Vector{Tuple{Bool, MultiDict{Any, Any}}}:
- (1, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3], "v0" => [1])))
- (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
- (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
- (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3])))
- (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
- (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
-
-julia> r=ParSitter.query(target_tq,
-                         query_tq;
-                         match_type=:nonstrict,
-                         target_tree_nodevalue=_target_tree_nodevalue,
-                         query_tree_nodevalue=_query_tree_nodevalue,
-                         capture_function=n->n.head,
-                         node_comparison_yields_true=_capture_on_empty_query_value)
-       map(t->t[1:2], r)
-6-element Vector{Tuple{Bool, DataStructures.MultiDict{Any, Any}}}:
- (1, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3, 10], "v0" => [1])))
- (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
- (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
- (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}("v2" => [3])))
- (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
- (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
-```
 """
 function query(
         target_tree,
@@ -426,8 +343,8 @@ end
 
 
 """
-    Function that returns captured values from a query. If the key does not
-    exist `nothing` is returned.
+Function that returns captured values from a query. If the key does not
+exist `nothing` is returned.
 """
 get_capture(qr::AbstractVector, key) = begin
     qrf = filter(first, qr)  # get only matched queries

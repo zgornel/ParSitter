@@ -5,9 +5,10 @@ Pkg.add("DocumenterMermaid")
 using Documenter
 using DocumenterMermaid
 using ParSitter
+using AbstractTrees
 
 # Make src directory available
-push!(LOAD_PATH,"../src/")
+push!(LOAD_PATH, "../src/")
 
 # Make documentation
 makedocs(
@@ -20,7 +21,7 @@ makedocs(
     pages = [
         "Introduction" => "index.md",
         "Usage examples" => "examples.md",
-        "API Reference" => "api.md"
+        "API Reference" => "api.md",
     ],
     repo = "github.com:zgornel/ParSitter.git",
 )

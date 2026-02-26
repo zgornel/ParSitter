@@ -30,10 +30,12 @@ test_dir = abspath(dirname(@__FILE__))
         for language in keys(LANGUAGE_MAP)
             language_dir = joinpath(test_dir, "code", language)
             file_path = joinpath(language_dir, FILE_MAP[language])
-            parsed = parse(Code(read(file_path, String)),
-                           language,
-                           escape_chars=false,
-                           print_code=false)
+            parsed = parse(
+                Code(read(file_path, String)),
+                language,
+                escape_chars = false,
+                print_code = false
+            )
             @test parsed isa Dict   # parsing command executed and returned
             @test !isempty(parsed)  # contents were parsed
         end

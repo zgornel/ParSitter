@@ -3,4 +3,24 @@ CurrentModule=ParSitter
 ```
 
 # Introduction
-This is a library for parsing code.
+ParSitter is a library for parsing and querying code. It supports parsing of code to abstract syntax trees (ASTs) and extracting information from the trees by executing code queries over the ASTs. This [paper](https://theory.stanford.edu/~tim/papers/ijcai11.pdf) provides a nice introduction into the main concepts behind the matching.
+
+A code query is basically [tree pattern matching](https://en.wikipedia.org/wiki/Pattern_matching#Tree_patterns) with capturing of values. Throughout the documentation we shall refer to:
+ - **target tree** the tree which one queries
+ - **query tree** the tree which is used extract values from the target tree.
+
+# Features
+ - parsing of `Python`, `Julia`, `C`, `C#` and `R` through [tree-sitter](https://tree-sitter.github.io/tree-sitter/)
+ - tree matching using queries that can be expressed as `Tuple`s (in an [S-Expression](https://en.wikipedia.org/wiki/S-expression) fashion)
+
+# Installation
+The installation can be done by manually by cloning the repository with:
+```
+git clone https://github.com/zgornel/ParSitter
+```
+
+# Contents
+```@contents
+Pages = ["examples.md", "api.md"]
+Depth = 3
+```
