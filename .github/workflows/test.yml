@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'master'
+      - 'cc-improvements'
     tags:
       - '*'
   pull_request:
