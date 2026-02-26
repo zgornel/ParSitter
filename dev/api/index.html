@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>API Reference · ParSitter</title><meta name="title" content="API Reference · ParSitter"/><meta property="og:title" content="API Reference · ParSitter"/><meta property="twitter:title" content="API Reference · ParSitter"/><meta name="description" content="Documentation for ParSitter."/><meta property="og:description" content="Documentation for ParSitter."/><meta property="twitter:description" content="Documentation for ParSitter."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">ParSitter</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Introduction</a></li><li><a class="tocitem" href="../examples/">Usage examples</a></li><li class="is-active"><a class="tocitem" href>API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>API Reference</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>API Reference</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="github.com:zgornel/ParSitter.git" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><ul><li><a href="#Base.convert-Union{Tuple{S}, Tuple{Type{Tuple}, S}} where S"><code>Base.convert</code></a></li><li><a href="#Base.convert-Union{Tuple{S}, Tuple{Type{ParSitter.TreeQueryExpr}, S}} where S"><code>Base.convert</code></a></li><li><a href="#ParSitter.build_tq_tree-Tuple{T} where T"><code>ParSitter.build_tq_tree</code></a></li><li><a href="#ParSitter.build_xml_tree-Tuple{String}"><code>ParSitter.build_xml_tree</code></a></li><li><a href="#ParSitter.check_tq_tree-Tuple{ParSitter.TreeQueryExpr}"><code>ParSitter.check_tq_tree</code></a></li><li><a href="#ParSitter.get_capture-Tuple{AbstractVector, Any}"><code>ParSitter.get_capture</code></a></li><li><a href="#ParSitter.is_capture_node-Tuple{T} where T&lt;:AbstractString"><code>ParSitter.is_capture_node</code></a></li><li><a href="#ParSitter.match_tree-Tuple{Any, Any}"><code>ParSitter.match_tree</code></a></li><li><a href="#ParSitter.query-Tuple{Any, Any}"><code>ParSitter.query</code></a></li></ul><article><details class="docstring" open="true"><summary id="Base.convert-Union{Tuple{S}, Tuple{Type{ParSitter.TreeQueryExpr}, S}} where S"><a class="docstring-binding" href="#Base.convert-Union{Tuple{S}, Tuple{Type{ParSitter.TreeQueryExpr}, S}} where S"><code>Base.convert</code></a> — <span class="docstring-category">Method</span></summary><section><div><p>Convert a tree <code>t</code> to a <code>TreeQueryExpr</code>. The node value is returned by <code>nodevalue</code> and children of the node returned by <code>children</code>.</p></div><a class="docs-sourcelink" target="_blank" href="github.com:zgornel/ParSitter.git">source</a></section></details></article><article><details class="docstring" open="true"><summary id="Base.convert-Union{Tuple{S}, Tuple{Type{Tuple}, S}} where S"><a class="docstring-binding" href="#Base.convert-Union{Tuple{S}, Tuple{Type{Tuple}, S}} where S"><code>Base.convert</code></a> — <span class="docstring-category">Method</span></summary><section><div><p>Convert from a tree-like object to a Tuple.</p><pre><code class="language-julia hljs">using ParSitter
+tt=(1,2,(3,(4,5,(6,),7,5)));
+tq = ParSitter.build_tq_tree(tt)
+tt2 = convert(Tuple, tq)</code></pre></div><a class="docs-sourcelink" target="_blank" href="github.com:zgornel/ParSitter.git">source</a></section></details></article><article><details class="docstring" open="true"><summary id="ParSitter.build_tq_tree-Tuple{T} where T"><a class="docstring-binding" href="#ParSitter.build_tq_tree-Tuple{T} where T"><code>ParSitter.build_tq_tree</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">build_tq_tree(t::Tuple)</code></pre><p>Build a tree query expression tree out of a nested tuple: the assumption is that the first element of each tuple is the head of the expression, the rest are children.</p></div><a class="docs-sourcelink" target="_blank" href="github.com:zgornel/ParSitter.git">source</a></section></details></article><article><details class="docstring" open="true"><summary id="ParSitter.build_xml_tree-Tuple{String}"><a class="docstring-binding" href="#ParSitter.build_xml_tree-Tuple{String}"><code>ParSitter.build_xml_tree</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">build_xml_tree(tree_sitter_xml_ast::String)</code></pre><p>Postprocesses and parse the tree-sitter XML output to something that can be traversed to match a given query.</p></div><a class="docs-sourcelink" target="_blank" href="github.com:zgornel/ParSitter.git">source</a></section></details></article><article><details class="docstring" open="true"><summary id="ParSitter.check_tq_tree-Tuple{ParSitter.TreeQueryExpr}"><a class="docstring-binding" href="#ParSitter.check_tq_tree-Tuple{ParSitter.TreeQueryExpr}"><code>ParSitter.check_tq_tree</code></a> — <span class="docstring-category">Method</span></summary><section><div><p>Checks that a query tree does not contain duplicate capture keys.</p></div><a class="docs-sourcelink" target="_blank" href="github.com:zgornel/ParSitter.git">source</a></section></details></article><article><details class="docstring" open="true"><summary id="ParSitter.get_capture-Tuple{AbstractVector, Any}"><a class="docstring-binding" href="#ParSitter.get_capture-Tuple{AbstractVector, Any}"><code>ParSitter.get_capture</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">Function that returns captured values from a query. If the key does not
+exist `nothing` is returned.</code></pre></div><a class="docs-sourcelink" target="_blank" href="github.com:zgornel/ParSitter.git">source</a></section></details></article><article><details class="docstring" open="true"><summary id="ParSitter.is_capture_node-Tuple{T} where T&lt;:AbstractString"><a class="docstring-binding" href="#ParSitter.is_capture_node-Tuple{T} where T&lt;:AbstractString"><code>ParSitter.is_capture_node</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">is_capture_node(n; capture_sym=DEFAULT_CAPTURE_SYM)</code></pre><p>Function that checks whether a node is a &#39;capture node&#39; i.e. value of the form &quot;match@capture_key&quot; and returns a <code>NamedTuple</code> with the result and the capture key string</p><pre><code class="language-julia hljs">julia&gt; ParSitter.is_capture_node(&quot;value@capture_key&quot;)
+(is_match = true, capture_key = &quot;capture_key&quot;)
+
+julia&gt; ParSitter.is_capture_node(&quot;value@capture_key&quot;, capture_sym=&quot;@@&quot;)
+(is_match = false, capture_key = nothing)</code></pre></div><a class="docs-sourcelink" target="_blank" href="github.com:zgornel/ParSitter.git">source</a></section></details></article><article><details class="docstring" open="true"><summary id="ParSitter.match_tree-Tuple{Any, Any}"><a class="docstring-binding" href="#ParSitter.match_tree-Tuple{Any, Any}"><code>ParSitter.match_tree</code></a> — <span class="docstring-category">Method</span></summary><section><div><pre><code class="language-julia hljs">function match_tree(target_tree,
+                    query_tree;
+                    match_cache=Dict(),
+                    captured_symbols=MultiDict(),
+                    match_type=:strict,
+                    is_capture_node=is_capture_node,
+                    target_tree_nodevalue=AbstractTrees.nodevalue,
+                    query_tree_nodevalue=AbstractTrees.nodevalue,
+                    capture_function=AbstractTrees.nodevalue,
+                    node_comparison_yields_true=(args...)-&gt;false)</code></pre><p>Function that searches a <code>query_tree</code> into a <code>target_tree</code>. It returns a vector of subtree matches, where each element is a <code>Tuple</code> that contains the result of the match, any captured values and the trees that were compared. To capture a value, the function <code>is_capture_node</code> must return <code>true</code> for a given query node. One example is using query nodes of  the form <code>&quot;nodevalue@capture_variable&quot;</code>. In the matching process, the query and target node values are extracted using <code>query_tree_nodevalue</code> and <code>target_tree_nodevalue</code> respectively and compared. If they match, the <code>target_tree</code> node value is captured by applying <code>capture_function</code> to the node and a <code>MultiDict(&quot;capture_variable&quot;=&gt;captured_target_node_value))</code>. Tree comparisons are also hashed and the result as well as captured symbols are stored in <code>match_cache</code> for quick retrieval.</p><p><strong>Example</strong></p><pre><code class="language-julia hljs">julia&gt; using ParSitter
+       using AbstractTrees
+
+       _query_tree_nodevalue(n) = ParSitter.is_capture_node(n).is_match ? split(n.head, &quot;@&quot;)[1] : n.head
+       _target_tree_nodevalue(n)=string(n.head)
+       _capture_on_empty_query_value(t1,t2) = ParSitter.is_capture_node(t2).is_match &amp;&amp; isempty(_query_tree_nodevalue(t2))
+
+       my_matcher(t,q) = ParSitter.match_tree(
+                              ParSitter.build_tq_tree(t),
+                              ParSitter.build_tq_tree(q);
+                              target_tree_nodevalue=_target_tree_nodevalue,
+                              query_tree_nodevalue=_query_tree_nodevalue,
+                              capture_function=n-&gt;n.head,
+                              node_comparison_yields_true=_capture_on_empty_query_value)
+
+       query = (&quot;1@v0&quot;, &quot;2&quot;, &quot;@v2&quot;)   # - query means: capture in &quot;v0&quot; if target value is 1, match on 2, capture any symbol in &quot;v2&quot;
+
+       t=(1,2,10); my_matcher( t, query)[1:2] |&gt; println
+       t=(10,2,11); my_matcher( t, query)[1:2] |&gt; println
+       t=(1,2,3,4,5); my_matcher( t, query)[1:2] |&gt; println
+(true, MultiDict{Any, Any}(Dict{Any, Vector{Any}}(&quot;v2&quot; =&gt; [10], &quot;v0&quot; =&gt; [1])))
+(false, MultiDict{Any, Any}(Dict{Any, Vector{Any}}(&quot;v2&quot; =&gt; [11])))
+(true, MultiDict{Any, Any}(Dict{Any, Vector{Any}}(&quot;v2&quot; =&gt; [3], &quot;v0&quot; =&gt; [1])))</code></pre></div><a class="docs-sourcelink" target="_blank" href="github.com:zgornel/ParSitter.git">source</a></section></details></article><article><details class="docstring" open="true"><summary id="ParSitter.query-Tuple{Any, Any}"><a class="docstring-binding" href="#ParSitter.query-Tuple{Any, Any}"><code>ParSitter.query</code></a> — <span class="docstring-category">Method</span></summary><section><div><p>Query a tree with another tree. This will match the <code>query_tree</code> with all substrees of <code>target_tree</code>. Both trees should support the <code>AbstractTrees</code> interface.</p><p><strong>Example</strong></p><pre><code class="language-julia hljs">julia&gt; using ParSitter
+       using AbstractTrees
+
+       query = (&quot;1@v0&quot;, &quot;2&quot;, &quot;@v2&quot;)   # - query means: capture in &quot;v0&quot; if target value is 1, match on 2, capture any symbol in &quot;v2&quot;
+       target = (1, 2, 3, (10, 2, 3)) # - only the (1,2,3) subtree will match, the second will not bevause of the 10;
+                                      # - @v2 will always capture values (due to `_capture_on_empty_query_value`)
+       query_tq = ParSitter.build_tq_tree(query)
+       target_tq = ParSitter.build_tq_tree(target)
+
+       _query_tree_nodevalue(n) = ParSitter.is_capture_node(n).is_match ? split(n.head, &quot;@&quot;)[1] : n.head
+       _target_tree_nodevalue(n) = string(n.head)
+       _capture_on_empty_query_value(t1,t2) = ParSitter.is_capture_node(t2).is_match &amp;&amp; isempty(_query_tree_nodevalue(t2))
+       print_tree(target_tq); println(&quot;---&quot;)
+       print_tree(query_tq); println(&quot;---&quot;)
+       r=ParSitter.query(target_tq,
+                         query_tq;
+                         match_type=:strict,
+                         target_tree_nodevalue=_target_tree_nodevalue,
+                         query_tree_nodevalue=_query_tree_nodevalue,
+                         capture_function=n-&gt;n.head,
+                         node_comparison_yields_true=_capture_on_empty_query_value)
+       map(t-&gt;t[1:2], r)
+1
+├─ 2
+├─ 3
+└─ 10
+   ├─ 2
+   └─ 3
+---
+&quot;1@v0&quot;
+├─ &quot;2&quot;
+└─ &quot;@v2&quot;
+---
+6-element Vector{Tuple{Bool, MultiDict{Any, Any}}}:
+ (1, MultiDict{Any, Any}(Dict{Any, Vector{Any}}(&quot;v2&quot; =&gt; [3], &quot;v0&quot; =&gt; [1])))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}(&quot;v2&quot; =&gt; [3])))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+
+julia&gt; r=ParSitter.query(target_tq,
+                         query_tq;
+                         match_type=:nonstrict,
+                         target_tree_nodevalue=_target_tree_nodevalue,
+                         query_tree_nodevalue=_query_tree_nodevalue,
+                         capture_function=n-&gt;n.head,
+                         node_comparison_yields_true=_capture_on_empty_query_value)
+       map(t-&gt;t[1:2], r)
+6-element Vector{Tuple{Bool, DataStructures.MultiDict{Any, Any}}}:
+ (1, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}(&quot;v2&quot; =&gt; [3, 10], &quot;v0&quot; =&gt; [1])))
+ (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}(&quot;v2&quot; =&gt; [3])))
+ (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))
+ (0, DataStructures.MultiDict{Any, Any}(Dict{Any, Vector{Any}}()))</code></pre></div><a class="docs-sourcelink" target="_blank" href="github.com:zgornel/ParSitter.git">source</a></section></details></article><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({
+    startOnLoad: true,
+    theme: "neutral"
+});
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../examples/">« Usage examples</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 26 February 2026 17:45">Thursday 26 February 2026</span>. Using Julia version 1.12.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
