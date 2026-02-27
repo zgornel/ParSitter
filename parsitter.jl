@@ -15,7 +15,7 @@ function get_arguments(args::Vector{String})
     s = ArgParseSettings()
     @add_arg_table! s begin
         "input"
-        help = "entitity to parse (directory, file or snippet of code"
+        help = "entitity to parse (directory, file or snippet of code)"
         arg_type = String
         "--input-type"
         help = "What is being parsed. Available 'file', 'directory', 'code'"

@@ -23,13 +23,13 @@ makedocs(
         "Usage examples" => "examples.md",
         "API Reference" => "api.md",
     ],
-    repo = "github.com:zgornel/ParSitter.git",
+    repo = "github.com:zgornel/ParSitter.jl.git",
 )
 
 # Deploy documentation
 deploydocs(
     #remotes=nothing,
-    repo = "github.com/zgornel/ParSitter.git",
+    repo = "github.com/zgornel/ParSitter.jl.git",
     target = "build",
     deps = nothing,
     make = nothing
