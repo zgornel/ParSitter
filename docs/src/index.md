@@ -3,7 +3,7 @@ CurrentModule=ParSitter
 ```
 
 # Introduction
-ParSitter is a library for parsing and querying code. It supports parsing of code to abstract syntax trees (ASTs) and extracting information from the trees by executing code queries over the ASTs. This [paper](https://theory.stanford.edu/~tim/papers/ijcai11.pdf) provides a nice introduction into the main concepts behind the matching.
+ParSitter.jl is a library for parsing and querying code. It supports parsing of code to abstract syntax trees (ASTs) and extracting information from the trees by executing code queries over the ASTs. This [paper](https://theory.stanford.edu/~tim/papers/ijcai11.pdf) provides a nice introduction into the main concepts behind the matching.
 
 A code query is basically [tree pattern matching](https://en.wikipedia.org/wiki/Pattern_matching#Tree_patterns) with capturing of values. Throughout the documentation we shall refer to:
  - **target tree** the tree which one queries
@@ -16,7 +16,7 @@ A code query is basically [tree pattern matching](https://en.wikipedia.org/wiki/
 # Installation
 The installation can be done by manually by cloning the repository with:
 ```
-git clone https://github.com/zgornel/ParSitter
+git clone https://github.com/zgornel/ParSitter.jl
 ```
 
 # Contents

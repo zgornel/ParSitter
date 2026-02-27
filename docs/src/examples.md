@@ -94,7 +94,7 @@ map(t->t[1:2], r)
 ```
 
 ## CLI-based parsing
-ParSitter comes with a command line tool that allows easy parsing of inline code, files and directories. Currently, it supports the following languages: [Python](https://www.python.org/), [Julia](https://julialang.org/), [C](https://en.wikipedia.org/wiki/C_(programming_language)), [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) and [R](https://www.r-project.org/)
+ParSitter.jl comes with a command line tool that allows easy parsing of inline code, files and directories. Currently, it supports the following languages: [Python](https://www.python.org/), [Julia](https://julialang.org/), [C](https://en.wikipedia.org/wiki/C_(programming_language)), [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) and [R](https://www.r-project.org/)
 
 ### Installing `tree-sitter` languages
 In order to be able to parse code, `tree-sitter` and plugins for specific languages need to be installed. For example, to install the python language parser and Assuming that we want to install it to a directory named `_parsers`, located in the current directory, the following sequence of commands should do it:
@@ -118,7 +118,7 @@ julia --project parsitter.jl ./test/code/python/test_project/main.py --input-typ
 ```
 will result in
 ```
-{".../ParSitter/test/code/python/test_project/main.py":"<?xml version=\"1.0\"?><module srow=\"0\" scol=\"0\" erow=\"15\" ecol=\"0\">  <import_from_sta...
+{".../ParSitter.jl/test/code/python/test_project/main.py":"<?xml version=\"1.0\"?><module srow=\"0\" scol=\"0\" erow=\"15\" ecol=\"0\">  <import_from_sta...
 }
 ```
  > Note the `--escape-chars` option should be used if parsing inline code with `\n`, '\t' or '\r' characters.
